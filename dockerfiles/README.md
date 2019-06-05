@@ -42,20 +42,27 @@
 #### Linux 16.04, Python Bindings
 
 1. Build the docker image from the Dockerfile in this repository.
-  ```
-  # If you have a Linux machine, preface this command with "sudo"
-
-  docker build -t onnxruntime-openvino -f Dockerfile.openvino .
-  ```
-  To use GPU_FP32:
-  ```
-  docker build -t onnxruntime-openvino --build-arg TARGET_DEVICE=GPU_FP32 -f Dockerfile.openvino .
-  ```
+  
+   Default is CPU_FP32
+   ```
+   docker build -t onnxruntime-openvino -f Dockerfile.openvino .
+   ```
+   To use GPU_FP32:
+   ```
+   docker build -t onnxruntime-openvino --build-arg TARGET_DEVICE=GPU_FP32 -f Dockerfile.openvino .
+   ```
+   To use GPU_FP16:
+   ```
+   docker build -t onnxruntime-openvino --build-arg TARGET_DEVICE=GPU_FP16 -f Dockerfile.openvino .
+   ```
 
 2. Run the Docker image
-
-  ```
-  # If you have a Linux machine, preface this command with "sudo"
-
-  docker run -it onnxruntime-openvino
-  ```
+   For CPU_FP32:
+   ```
+   docker run -it onnxruntime-openvino
+   ```
+   For GPU_FP32/GPU_FP16:
+   ```
+   docker run -it --device /dev/dri:/dev/dri onnxruntime-openvino
+   ```
+  
