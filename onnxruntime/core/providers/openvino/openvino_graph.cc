@@ -433,7 +433,6 @@ void OpenVINOGraph::Infer(Ort::CustomOpApi ort, OrtKernelContext* context) {
   // Preliminary Thread safety mechanism
   // Currently allows only one Infer execution at a time
   std::lock_guard<std::mutex> lock(compute_lock_);
-  std::cout << "OV" << std::endl;
 
   LOGS_DEFAULT(INFO) << log_tag << "Starting inference";
 
