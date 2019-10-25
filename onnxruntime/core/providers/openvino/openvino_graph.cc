@@ -347,6 +347,7 @@ void OpenVINOGraph::StartAsyncInference(Ort::CustomOpApi ort, std::vector<const 
   auto graph_input_info = openvino_network_->getInputsInfo();
 
   size_t i = 0;
+  double total = 0.0;
   for (auto input_info_iter = graph_input_info.begin();
        input_info_iter != graph_input_info.end(); ++input_info_iter, ++i) {
     // Get OpenVINO's input buffer
@@ -359,7 +360,17 @@ void OpenVINOGraph::StartAsyncInference(Ort::CustomOpApi ort, std::vector<const 
     const char* batch_memory_offset = tensor_data + input_data_size * batch_slice_idx;
 
     // Copy input data into OpenVINO's input buffer
+    typedef std::chrono::high_resolution_clock Time;
+    typedef std::chrono::duration<float> fsec;
+    typedef std::chrono::duration<double, std::ratio<1, 1000>> ms;
+    auto t0 = Time::now();
     std::memcpy(graph_input_buffer, batch_memory_offset, input_data_size);
+    auto t1 = Time::now();
+    fsec fs = t1 - t0;
+    ms d = std::chrono::duration_cast<ms>(fs);
+    total += d.count();
+    std::cout << "Input Mem copy: " << total<<std::endl;
+
   }
 
   // Start Async inference
@@ -378,6 +389,7 @@ void OpenVINOGraph::CompleteAsyncInference(Ort::CustomOpApi ort, std::vector<Ort
   auto graph_output_info = openvino_network_->getOutputsInfo();
 
   size_t i = 0;
+  double total = 0.0;
   for (auto output_info_iter = graph_output_info.begin();
        output_info_iter != graph_output_info.end(); ++output_info_iter, ++i) {
     // Get OpenVINO's output blob
@@ -388,9 +400,17 @@ void OpenVINOGraph::CompleteAsyncInference(Ort::CustomOpApi ort, std::vector<Ort
     size_t output_data_size = graph_output_blob->byteSize();
     char* tensor_data = ort.GetTensorMutableData<char>(output_tensors[i]);
     char* batch_memory_offset = tensor_data + output_data_size * batch_slice_idx;
-
     // Copy output results back to ONNX-RT's output buffers
+    typedef std::chrono::high_resolution_clock Time;
+    typedef std::chrono::duration<float> fsec;
+    typedef std::chrono::duration<double, std::ratio<1, 1000>> ms;
+    auto t0 = Time::now();
     std::memcpy(batch_memory_offset, graph_output_buffer, output_data_size);
+    auto t1 = Time::now();
+    fsec fs = t1 - t0;
+    ms d = std::chrono::duration_cast<ms>(fs);
+    total += d.count();
+    std::cout << "Output Mem copy: " << total << std::endl;
   }
 }
 
