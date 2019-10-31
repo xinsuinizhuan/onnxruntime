@@ -143,6 +143,7 @@ target_include_directories(onnxruntime_server_http_core_lib
   ${ONNXRUNTIME_ROOT}
   ${ONNXRUNTIME_ROOT}/server/http/core
   ${ONNXRUNTIME_ROOT}/server/core
+  $ENV{INTEL_OPENVINO_DIR}/deployment_tools/inference_engine/include
   ${Boost_INCLUDE_DIR}
   ${re2_src}
 )
@@ -152,7 +153,7 @@ target_link_libraries(onnxruntime_server_http_core_lib PRIVATE
 )
 
 # Server library
-add_library(onnxruntime_server_lib ${onnxruntime_server_lib_srcs})
+add_library(onnxruntime_server_lib ${onnxruntime_server_lib_srcs} )
 onnxruntime_add_include_to_target(onnxruntime_server_lib onnx_proto server_proto)
 target_include_directories(onnxruntime_server_lib PRIVATE
   ${ONNXRUNTIME_INCLUDE_DIR}
@@ -163,6 +164,7 @@ target_include_directories(onnxruntime_server_lib PRIVATE
   ${ONNXRUNTIME_ROOT}/server/core
   PUBLIC
   ${ONNXRUNTIME_ROOT}/server
+  $ENV{INTEL_OPENVINO_DIR}/deployment_tools/inference_engine/include
   ${Boost_INCLUDE_DIR}
   ${re2_src}
 )
@@ -209,6 +211,7 @@ onnxruntime_add_include_to_target(${SERVER_APP_NAME} onnxruntime_session onnxrun
 
 target_include_directories(${SERVER_APP_NAME} PRIVATE
     ${ONNXRUNTIME_INCLUDE_DIR}
+    $ENV{INTEL_OPENVINO_DIR}/deployment_tools/inference_engine/include
     ${ONNXRUNTIME_ROOT}/server/http
 )
 
