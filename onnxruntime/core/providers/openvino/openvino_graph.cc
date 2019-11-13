@@ -36,42 +36,20 @@ const std::string OpenVINOGraph::log_tag = "[OpenVINO-EP] ";
 InferenceEngine::Core ie;
 
 OpenVINOGraph::OpenVINOGraph(const onnxruntime::Node* fused_node) {
-  device_id_ = "CPU";
+  
+  //Get the devices that can support the current subgraph
+  const auto& attributes = fused_node->GetAttributes();
+  std::string device_id_ = attributes.at("device_id").s();
+  std::string precision_str = attributes.at("precision").s();
   precision_ = InferenceEngine::Precision::FP32;
-  std::string precision_str = "FP32";
+  if(precision_str != "FP32") {
+    precision_str = "FP16";
+    precision_ = InferenceEngine::Precision::FP16;
+  }
 
-#ifdef OPENVINO_CONFIG_CPU_FP32
-  device_id_ = "CPU";
-  precision_ = InferenceEngine::Precision::FP32;
-  precision_str = "FP32";
-  ie.AddExtension(std::make_shared<InferenceEngine::Extensions::Cpu::CpuExtensions>(), "CPU");
-#endif
-#ifdef OPENVINO_CONFIG_GPU_FP32
-  device_id_ = "GPU";
-  precision_ = InferenceEngine::Precision::FP32;
-  precision_str = "FP32";
-#endif
-#ifdef OPENVINO_CONFIG_GPU_FP16
-  device_id_ = "GPU";
-  precision_ = InferenceEngine::Precision::FP16;
-  precision_str = "FP16";
-#endif
-#ifdef OPENVINO_CONFIG_MYRIAD
-  device_id_ = "MYRIAD";
-  precision_ = InferenceEngine::Precision::FP16;
-  precision_str = "FP16";
-#endif
-#ifdef OPENVINO_CONFIG_VAD_M
-  device_id_ = "HDDL";
-  precision_ = InferenceEngine::Precision::FP16;
-  precision_str = "FP16";
-#endif
-
-#ifdef OPENVINO_CONFIG_VAD_F
-  device_id_ = "HETERO:FPGA,CPU";
-  precision_ = InferenceEngine::Precision::FP32;
-  precision_str = "FP32";
-#endif
+  if(device_id_.find("CPU") != std::string::npos) {
+    ie.AddExtension(std::make_shared<InferenceEngine::Extensions::Cpu::CpuExtensions>(), "CPU");
+  }
 
   // Infer Request class represents OpenVINO's logical hardware instance. These logical
   // instances are bound to physical hardware instances at runtime depending
@@ -85,7 +63,7 @@ OpenVINOGraph::OpenVINOGraph(const onnxruntime::Node* fused_node) {
   // In VAD-M (HDDL) accelerator, there are 8 parallel execution units. So, creating 8 instances
   // of Infer Requests only if the VAD-M accelerator is being used.
   // sets number of maximum parallel inferences
-  num_inf_reqs_ = (device_id_ == "HDDL") ? 8 : 1;
+  //num_inf_reqs_ = (device_id_ == "HDDL") ? 8 : 1;
 
   fused_node_ = fused_node;
 
@@ -125,7 +103,8 @@ OpenVINOGraph::OpenVINOGraph(const onnxruntime::Node* fused_node) {
   GetExecutableHandle(openvino_network_);
 
   //Loading model to the plugin
-  auto exeNetwork = ie.LoadNetwork(*openvino_network_, device_id_);
+  auto exeNetwork = ie.LoadNetwork(*openvino_network_, device_id_, {});
+  num_inf_reqs_ = exeNetwork.GetMetric(METRIC_KEY(OPTIMAL_NUMBER_OF_INFER_REQUESTS)).as<unsigned int>();
 
   LOGS_DEFAULT(INFO) << log_tag << "Network loaded into accelerator plug-in succesfully";
 
