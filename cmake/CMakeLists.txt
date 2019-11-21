@@ -540,8 +540,8 @@ if(onnxruntime_USE_OPENVINO)
 		add_definitions(-DOPENVINO_CONFIG_MYRIAD=1)
 	endif()
 
-  if(onnxruntime_USE_OPENVINO_MULTI)
-		add_definitions(-DOPENVINO_CONFIG_MULTI=1)
+  if(onnxruntime_USE_OPENVINO_AUTO)
+		add_definitions(-DOPENVINO_CONFIG_AUTO=1)
 	endif()
 
 	if(onnxruntime_USE_OPENVINO_GPU_FP32)

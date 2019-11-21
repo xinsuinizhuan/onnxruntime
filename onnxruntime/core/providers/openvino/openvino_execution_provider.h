@@ -16,7 +16,7 @@ constexpr const char* OPENVINO = "OpenVINO";
 
 // Information needed to construct OpenVINO execution providers.
 struct OpenVINOExecutionProviderInfo {
-  const char* device{"CPU_FP32"};
+  const char* device{""};
 
   explicit OpenVINOExecutionProviderInfo(const char* dev) : device(dev) {
   }
@@ -53,6 +53,8 @@ class OpenVINOExecutionProvider : public IExecutionProvider {
 
  private:
   OpenVINOExecutionProviderInfo info_;
+  //User device preference
+  std::string requested_device_;
 };
 
 }  // namespace onnxruntime

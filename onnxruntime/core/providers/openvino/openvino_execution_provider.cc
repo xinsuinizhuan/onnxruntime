@@ -28,7 +28,8 @@ constexpr const char* OpenVINO = "OpenVINO";
 
 OpenVINOExecutionProvider::OpenVINOExecutionProvider(OpenVINOExecutionProviderInfo& info)
     : IExecutionProvider{onnxruntime::kOpenVINOExecutionProvider} {
-  ORT_UNUSED_PARAMETER(info);
+  //ORT_UNUSED_PARAMETER(info);
+  requested_device_ = info.device;
 
   DeviceAllocatorRegistrationInfo device_info({OrtMemTypeDefault, [](int) { return onnxruntime::make_unique<CPUAllocator>(onnxruntime::make_unique<OrtMemoryInfo>(OPENVINO, OrtDeviceAllocator)); }, std::numeric_limits<size_t>::max()});
   InsertAllocator(CreateAllocator(device_info));
@@ -487,42 +488,136 @@ bool CheckGraphSupported(const onnxruntime::GraphViewer& graph_viewer, std::stri
   return true;
 }
 
+std::string SelectDevice(const onnxruntime::GraphViewer& graph_viewer, std::string requested_device, bool& precision_fp32, std::string& error_msg) {
+  InferenceEngine::Core ie;
+  std::vector<std::string> available_devices;
+  std::vector<std::string> usable_devices;
+  available_devices = ie.GetAvailableDevices();
+  bool one_device_supports_graph = false;
+  bool one_requested_device_found = false;
+  bool graph_supported_by_device = false;
+  std::string dev_error_msg = "NA";
+
+  std::string requested_devices_not_found = requested_device;
+  if(requested_device.size() > 0) {
+    //Determine whether requested device(s) are available
+    for (auto && dev: available_devices) {
+      if(requested_device.find(dev) != std::string::npos) {
+        one_requested_device_found = true;
+        requested_devices_not_found.erase(requested_devices_not_found.find(dev),dev.size());
+      }
+    }
+    //Strip hetero/multi prefix if present
+    if(requested_devices_not_found.find("HETERO:") != std::string::npos) {
+      requested_devices_not_found.erase(requested_devices_not_found.find("HETERO:"),7);
+    }
+    if(requested_devices_not_found.find("MULTI:") != std::string::npos) {
+      requested_devices_not_found.erase(requested_devices_not_found.find("MULTI:"),6);
+    }
+    std::replace(requested_devices_not_found.begin(),requested_devices_not_found.end(), ',', ' ');
+    if(requested_devices_not_found.size() > 0) {
+      LOGS_DEFAULT(WARNING) << openvino_ep::OpenVINOGraph::log_tag << "Devices (" << requested_devices_not_found.c_str() << ") not found";
+    }
+    if(!one_requested_device_found) {
+      LOGS_DEFAULT(WARNING) << openvino_ep::OpenVINOGraph::log_tag << "No user specified devices found. Defaulting to all available devices";
+      requested_device = "";
+    }
+  }
+  for (auto && dev: available_devices) {
+    //Check whether the graph is supported on each of the available and requested devices
+    graph_supported_by_device = CheckGraphSupported(graph_viewer, dev, dev_error_msg);
+    error_msg += dev + ":" + dev_error_msg + ". ";
+    if(graph_supported_by_device) {
+      if((requested_device.size() > 0 && requested_device.find(dev) != std::string::npos) || requested_device.size() == 0)
+      {
+        usable_devices.push_back(dev);
+        one_device_supports_graph = true;
+      }
+    }
+  }
+  if(!one_device_supports_graph) {
+    throw error_msg.c_str();
+  }
+
+  if(usable_devices.size() == 1)
+  {
+    return usable_devices[0];
+  }
+  else {
+    //Set precision based on usable devices. If VPU is present, must use FP16. Otherwise, all devices support 32 bit models
+    if(std::find(usable_devices.begin(),usable_devices.end(),"HDDL") != usable_devices.end() || 
+       std::find(usable_devices.begin(),usable_devices.end(),"MYRIAD") !=usable_devices.end()) {
+        precision_fp32 = false;
+    }
+
+    std::string allDevices = "MULTI:HDDL,MYRIAD,FPGA,GPU,CPU";
+
+    if(requested_device.find("HETERO") != std::string::npos) {
+      allDevices = "HETERO:HDDL,MYRIAD,FPGA,GPU,CPU";
+    }
+
+    //prioritize usable devices.
+    if(std::find(usable_devices.begin(),usable_devices.end(),"HDDL") == usable_devices.end()) {
+      allDevices.erase(allDevices.find("HDDL"),5);
+    }
+    if(std::find(usable_devices.begin(),usable_devices.end(),"MYRIAD") == usable_devices.end()) {
+      allDevices.erase(allDevices.find("MYRIAD"),7);
+    }
+    if(std::find(usable_devices.begin(),usable_devices.end(),"FPGA") == usable_devices.end()) {
+      allDevices.erase(allDevices.find("FPGA"),5);
+    }
+    if(std::find(usable_devices.begin(),usable_devices.end(),"GPU") == usable_devices.end()) {
+      allDevices.erase(allDevices.find("GPU"),4);
+    }
+    if(std::find(usable_devices.begin(),usable_devices.end(),"CPU") == usable_devices.end()) {
+      // ',CPU' must be deleted
+      allDevices.erase(allDevices.find("CPU")-1,4);
+    }
+
+    return allDevices;
+    }
+}
+
 std::vector<std::unique_ptr<ComputeCapability>> OpenVINOExecutionProvider::GetCapability(
     const onnxruntime::GraphViewer& graph_viewer,
     const std::vector<const KernelRegistry*>& /*kernel_registries*/) const {
   std::vector<std::unique_ptr<ComputeCapability>> result;
   bool precision_fp32 = true;
   std::string device_id = "CPU";
-  InferenceEngine::Core ie;
-  std::vector<std::string> available_devices;
+  bool autodetect_device = false;
 
 #ifdef OPENVINO_CONFIG_GPU_FP32
   device_id = "GPU";
+  autodetect_device = false;
 #endif
 
 #ifdef OPENVINO_CONFIG_GPU_FP16
   precision_fp32 = false;
   device_id = "GPU";
+  autodetect_device = false;
 #endif
 
 #ifdef OPENVINO_CONFIG_MYRIAD
   precision_fp32 = false;
   device_id = "MYRIAD";
+  autodetect_device = false;
 #endif
 
-#ifdef OPENVINO_CONFIG_MULTI
+#ifdef OPENVINO_CONFIG_AUTO
   precision_fp32 = true;
-  device_id = "MULTI";
-  available_devices = ie.GetAvailableDevices();
+  device_id = "AUTO";
+  autodetect_device = true;
 #endif
 
 #ifdef OPENVINO_CONFIG_VAD_M
   precision_fp32 = false;
   device_id = "HDDL";
+  autodetect_device = false;
 #endif
 
 #ifdef OPENVINO_CONFIG_VAD_F
   device_id = "FPGA";
+  autodetect_device = false;
 #endif
 
   int counter = 0;
@@ -532,54 +627,13 @@ std::vector<std::unique_ptr<ComputeCapability>> OpenVINOExecutionProvider::GetCa
   auto model_proto = GetModelProtoFromFusedNode(graph_viewer);
 
   std::set<const onnxruntime::NodeArg *> fused_inputs, fused_outputs;
+  
+  std::string error_msg;
+  std::string requested_device = requested_device_;
 
-  std::string error_msg = "";
-  std::vector<std::string> usable_devices;
   try {
-    if(device_id == "MULTI") {
-      bool one_device_supports_graph = false;
-      bool graph_supported_by_device = false;
-      std::string dev_error_msg = "NA";
-      for (auto && dev: available_devices) {
-        //Check whether the graph is supported on each of the available devices
-        graph_supported_by_device = CheckGraphSupported(graph_viewer, dev, dev_error_msg);
-        error_msg += dev + ":" + dev_error_msg + ". ";
-        if(graph_supported_by_device) {
-          usable_devices.push_back(dev);
-          one_device_supports_graph = true;
-        }
-      }
-      if(!one_device_supports_graph) {
-        throw error_msg.c_str();
-      }
-      
-      //Set precision based on usable devices. If VPU is present, must use FP16. Otherwise, all devices support 32 bit models
-      if(std::find(usable_devices.begin(),usable_devices.end(),"HDDL") != usable_devices.end() || 
-         std::find(usable_devices.begin(),usable_devices.end(),"MYRIAD") !=usable_devices.end()) {
-          precision_fp32 = false;
-      }
-
-      std::string allDevices = "MULTI:HDDL,MYRIAD,FPGA,GPU,CPU";
-      //prioritize usable devices.
-      if(std::find(usable_devices.begin(),usable_devices.end(),"HDDL") == usable_devices.end()) {
-        allDevices.erase(allDevices.find("HDDL"),5);
-      }
-      if(std::find(usable_devices.begin(),usable_devices.end(),"MYRIAD") == usable_devices.end()) {
-        allDevices.erase(allDevices.find("MYRIAD"),7);
-      }
-      if(std::find(usable_devices.begin(),usable_devices.end(),"FPGA") == usable_devices.end()) {
-        allDevices.erase(allDevices.find("FPGA"),5);
-      }
-      if(std::find(usable_devices.begin(),usable_devices.end(),"GPU") == usable_devices.end()) {
-        allDevices.erase(allDevices.find("GPU"),4);
-      }
-      if(std::find(usable_devices.begin(),usable_devices.end(),"CPU") == usable_devices.end()) {
-        // ',CPU' must be deleted
-        allDevices.erase(allDevices.find("CPU")-1,4);
-      }
-
-      device_id = allDevices;
-      
+    if(autodetect_device) {
+      device_id = SelectDevice(graph_viewer, requested_device, precision_fp32, error_msg);
     }
     else {
       if(!CheckGraphSupported(graph_viewer, device_id, error_msg)) {
@@ -591,6 +645,8 @@ std::vector<std::unique_ptr<ComputeCapability>> OpenVINOExecutionProvider::GetCa
     LOGS_DEFAULT(WARNING) << openvino_ep::OpenVINOGraph::log_tag << "Rejecting as graph has unsupported operations." << msg;
     return result;
   }
+
+  LOGS_DEFAULT(INFO) << openvino_ep::OpenVINOGraph::log_tag << "Using device: " << device_id;
 
   std::string model_proto_strbuf;
   model_proto.SerializeToString(&model_proto_strbuf);

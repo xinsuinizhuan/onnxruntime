@@ -59,8 +59,8 @@
 #elif OPENVINO_CONFIG_MYRIAD
 #define BACKEND_OPENVINO "-OPENVINO_MYRIAD"
 
-#elif OPENVINO_CONFIG_MULTI
-#define BACKEND_OPENVINO "-OPENVINO_MULTI"
+#elif OPENVINO_CONFIG_AUTO
+#define BACKEND_OPENVINO "-OPENVINO_AUTO"
 
 #elif OPENVINO_CONFIG_VAD_M
 #define BACKEND_OPENVINO "-OPENVINO_VAD_M"
@@ -101,6 +101,7 @@
 #endif
 #ifdef USE_OPENVINO
 #include "core/providers/openvino/openvino_provider_factory.h"
+std::string openvino_device;
 #endif
 #ifdef USE_NUPHAR
 #include "core/providers/nuphar/nuphar_provider_factory.h"
@@ -318,7 +319,8 @@ void RegisterExecutionProviders(InferenceSession* sess, const std::vector<std::s
 #endif
     } else if (type == kOpenVINOExecutionProvider) {
 #ifdef USE_OPENVINO
-      RegisterExecutionProvider(sess, *onnxruntime::CreateExecutionProviderFactory_OpenVINO("CPU"));
+      RegisterExecutionProvider(sess, *onnxruntime::CreateExecutionProviderFactory_OpenVINO(openvino_device.c_str()));
+      openvino_device.clear();
 #endif
     } else if (type == kNupharExecutionProvider) {
 #if USE_NUPHAR
@@ -372,6 +374,16 @@ void addGlobalMethods(py::module& m) {
   });
   m.def("get_nuphar_settings", []() -> std::string {
     return nuphar_settings;
+  });
+#endif
+
+#ifdef USE_OPENVINO
+  m.def("set_openvino_device", [](const std::string& device) {
+    openvino_device = device; },
+    "Set the prefered OpenVINO device(s) to be used. If left unset, all available devices will be used. Options include: HDDL, FPGA, MYRIAD, GPU, CPU. To use the Heterogeneous plugin, type 'HETERO:<DEV1>,<DEV2>'. To use the multidevice plugin, type '<DEV1>,...,<DEV_N>'." 
+  );
+  m.def("get_openvino_device", []() -> std::string {
+    return openvino_device;
   });
 #endif
 

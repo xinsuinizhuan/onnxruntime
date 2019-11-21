@@ -132,7 +132,7 @@ Use the individual flags to only run the specified stages.
     parser.add_argument("--use_automl", action='store_true', help="Build with AutoML support.")
     parser.add_argument("--use_ngraph", action='store_true', help="Build with nGraph.")
     parser.add_argument("--use_openvino", nargs="?", const="CPU_FP32",
-                        choices=["CPU_FP32","GPU_FP32","GPU_FP16","VAD-M_FP16","MYRIAD_FP16","VAD-F_FP32", "MULTIDEVICE"], help="Build with OpenVINO for specific hardware.")
+                        choices=["CPU_FP32","GPU_FP32","GPU_FP16","VAD-M_FP16","MYRIAD_FP16","VAD-F_FP32", "AUTO"], help="Build with OpenVINO for specific hardware.")
     parser.add_argument("--use_dnnlibrary", action='store_true', help="Build with DNNLibrary.")
     parser.add_argument("--use_nsync", action='store_true', help="Build with NSYNC.")
     parser.add_argument("--use_preinstalled_eigen", action='store_true', help="Use pre-installed eigen.")
@@ -346,7 +346,7 @@ def generate_build_tree(cmake_path, source_dir, build_dir, cuda_home, cudnn_home
                  "-Donnxruntime_USE_NGRAPH=" + ("ON" if args.use_ngraph else "OFF"),
                  "-Donnxruntime_USE_OPENVINO=" + ("ON" if args.use_openvino else "OFF"),
                  "-Donnxruntime_USE_OPENVINO_MYRIAD=" + ("ON" if args.use_openvino == "MYRIAD_FP16" else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_MULTI=" + ("ON" if args.use_openvino == "MULTIDEVICE" else "OFF"),
+                 "-Donnxruntime_USE_OPENVINO_AUTO=" + ("ON" if args.use_openvino == "AUTO" else "OFF"),
                  "-Donnxruntime_USE_OPENVINO_GPU_FP32=" + ("ON" if args.use_openvino == "GPU_FP32" else "OFF"),
                  "-Donnxruntime_USE_OPENVINO_GPU_FP16=" + ("ON" if args.use_openvino == "GPU_FP16" else "OFF"),
                  "-Donnxruntime_USE_OPENVINO_CPU_FP32=" + ("ON" if args.use_openvino == "CPU_FP32" else "OFF"),

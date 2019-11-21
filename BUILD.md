@@ -277,7 +277,7 @@ See more information on the OpenVINO Execution Provider [here](./docs/execution_
 
 | Hardware Option | Target Device |
 | --------------- | ------------------------|
-| <code>MULTIDEVICE</code> | Network will execute on all Intel<sup>®</sup> CPUs, GPUs, VPUs and FPGAs available at runtime| 
+| <code>AUTO</code> | Network will execute on all Intel<sup>®</sup> CPUs, GPUs, VPUs and FPGAs available at runtime| 
 | <code>CPU_FP32</code> | Intel<sup>®</sup> CPUs |
 | <code>GPU_FP32</code> | Intel<sup>®</sup> Integrated Graphics |
 | <code>GPU_FP16</code> | Intel<sup>®</sup> Integrated Graphics with FP16 quantization of models |
