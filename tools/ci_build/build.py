@@ -131,8 +131,10 @@ Use the individual flags to only run the specified stages.
     parser.add_argument("--use_gemmlowp", action='store_true', help="Build with gemmlowp for quantized gemm.")
     parser.add_argument("--use_automl", action='store_true', help="Build with AutoML support.")
     parser.add_argument("--use_ngraph", action='store_true', help="Build with nGraph.")
-    parser.add_argument("--use_openvino", nargs="?", const="CPU_FP32",
-                        choices=["CPU_FP32","GPU_FP32","GPU_FP16","VAD-M_FP16","MYRIAD_FP16","VAD-F_FP32", "AUTO"], help="Build with OpenVINO for specific hardware.")
+    parser.add_argument("--use_openvino", nargs="*", default="AUTO",
+                        choices=["CPU","GPU","VAD_M","MYRIAD","VAD_F", "AUTO", "MULTI", "HETERO"], help="Build with OpenVINO for specific hardware.")
+    parser.add_argument("--openvino_precision", nargs="?",
+                        choices=["FP32","FP16"], help="Set OpenVINO model precision" )
     parser.add_argument("--use_dnnlibrary", action='store_true', help="Build with DNNLibrary.")
     parser.add_argument("--use_nsync", action='store_true', help="Build with NSYNC.")
     parser.add_argument("--use_preinstalled_eigen", action='store_true', help="Use pre-installed eigen.")
@@ -345,13 +347,7 @@ def generate_build_tree(cmake_path, source_dir, build_dir, cuda_home, cudnn_home
                  "-Donnxruntime_USE_GEMMLOWP=" + ("ON" if args.use_gemmlowp else "OFF"),
                  "-Donnxruntime_USE_NGRAPH=" + ("ON" if args.use_ngraph else "OFF"),
                  "-Donnxruntime_USE_OPENVINO=" + ("ON" if args.use_openvino else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_MYRIAD=" + ("ON" if args.use_openvino == "MYRIAD_FP16" else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_AUTO=" + ("ON" if args.use_openvino == "AUTO" else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_GPU_FP32=" + ("ON" if args.use_openvino == "GPU_FP32" else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_GPU_FP16=" + ("ON" if args.use_openvino == "GPU_FP16" else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_CPU_FP32=" + ("ON" if args.use_openvino == "CPU_FP32" else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_VAD_M=" + ("ON" if args.use_openvino == "VAD-M_FP16" else "OFF"),
-                 "-Donnxruntime_USE_OPENVINO_VAD_F=" + ("ON" if args.use_openvino == "VAD-F_FP32" else "OFF"),
+                 "-Donnxruntime_OPENVINO_DEVICE=" + str(args.use_openvino),
                  "-Donnxruntime_USE_NNAPI=" + ("ON" if args.use_dnnlibrary else "OFF"),
                  "-Donnxruntime_USE_OPENMP=" + ("ON" if args.use_openmp and not args.use_dnnlibrary and not args.use_mklml and not args.use_ngraph else "OFF"),
                  "-Donnxruntime_USE_TVM=" + ("ON" if args.use_tvm else "OFF"),
@@ -457,6 +453,23 @@ def build_targets(cmake_path, build_dir, configs, parallel):
 def add_dir_if_exists(dir, dir_list):
     if (os.path.isdir(dir)):
         dir_list.append(dir)
+
+def setup_openvino_vars(args):
+    #Set device string that will be passed to OpenVINO EP
+    print(args.use_openvino)
+    args.use_openvino = ["FPGA" if x=="VAD_F" else x for x in args.use_openvino]
+    args.use_openvino = ["HDDL" if x=="VAD_M" else x for x in args.use_openvino]
+    if "MULTI" in args.use_openvino or (len(args.use_openvino) > 1 and "HETERO" not in args.use_openvino):
+        if "MULTI" in args.use_openvino:
+            args.use_openvino.remove('MULTI')
+        args.use_openvino = "MULTI:" + ','.join(args.use_openvino)
+    elif "HETERO" in args.use_openvino:
+        args.use_openvino.remove('HETERO')
+        args.use_openvino = "HETERO:" + ','.join(args.use_openvino)
+    else:
+        args.use_openvino = args.use_openvino[0]
+    
+    return args.use_openvino
 
 def setup_cuda_vars(args):
 
@@ -896,7 +909,7 @@ def main():
         args.build_shared_lib = True
 
     # Disabling unit tests for VAD-F as FPGA only supports models with NCHW layout
-    if args.use_openvino == "VAD-F_FP32":
+    if "VAD_F" in args.use_openvino:
         args.test = False
 
     configs = set(args.config)
@@ -913,6 +926,11 @@ def main():
 
     # if using tensorrt, setup tensorrt paths
     tensorrt_home = setup_tensorrt_vars(args)
+
+    # if using openvino, setup preferred devices
+    args.use_openvino = setup_openvino_vars(args)
+    
+    print(args.use_openvino)
 
     os.makedirs(build_dir, exist_ok=True)
 

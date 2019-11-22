@@ -583,42 +583,7 @@ std::vector<std::unique_ptr<ComputeCapability>> OpenVINOExecutionProvider::GetCa
     const std::vector<const KernelRegistry*>& /*kernel_registries*/) const {
   std::vector<std::unique_ptr<ComputeCapability>> result;
   bool precision_fp32 = true;
-  std::string device_id = "CPU";
-  bool autodetect_device = false;
-
-#ifdef OPENVINO_CONFIG_GPU_FP32
-  device_id = "GPU";
-  autodetect_device = false;
-#endif
-
-#ifdef OPENVINO_CONFIG_GPU_FP16
-  precision_fp32 = false;
-  device_id = "GPU";
-  autodetect_device = false;
-#endif
-
-#ifdef OPENVINO_CONFIG_MYRIAD
-  precision_fp32 = false;
-  device_id = "MYRIAD";
-  autodetect_device = false;
-#endif
-
-#ifdef OPENVINO_CONFIG_AUTO
-  precision_fp32 = true;
-  device_id = "AUTO";
-  autodetect_device = true;
-#endif
-
-#ifdef OPENVINO_CONFIG_VAD_M
-  precision_fp32 = false;
-  device_id = "HDDL";
-  autodetect_device = false;
-#endif
-
-#ifdef OPENVINO_CONFIG_VAD_F
-  device_id = "FPGA";
-  autodetect_device = false;
-#endif
+  std::string device_id;
 
   int counter = 0;
 
@@ -629,17 +594,17 @@ std::vector<std::unique_ptr<ComputeCapability>> OpenVINOExecutionProvider::GetCa
   std::set<const onnxruntime::NodeArg *> fused_inputs, fused_outputs;
   
   std::string error_msg;
-  std::string requested_device = requested_device_;
+  std::string requested_device;
+  
+  if(requested_device_.size() > 0) {
+    requested_device = requested_device_;
+  }
+  else {
+    requested_device = OPENVINO_DEVICE;
+  }
 
   try {
-    if(autodetect_device) {
       device_id = SelectDevice(graph_viewer, requested_device, precision_fp32, error_msg);
-    }
-    else {
-      if(!CheckGraphSupported(graph_viewer, device_id, error_msg)) {
-        throw error_msg.c_str();
-      }
-    }
   }
   catch (const char* msg) {
     LOGS_DEFAULT(WARNING) << openvino_ep::OpenVINOGraph::log_tag << "Rejecting as graph has unsupported operations." << msg;
