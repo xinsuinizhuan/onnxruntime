@@ -523,16 +523,32 @@ std::string SelectDevice(const onnxruntime::GraphViewer& graph_viewer, std::stri
       requested_device = "";
     }
   }
-  for (auto && dev: available_devices) {
+  
+  std::vector<std::string> available_and_requested_devices;
+  //Get intersection of available and requested devices (preserve ordering)
+  if(requested_device.size() != 0)
+  {
+    for (auto && dev: available_devices)
+      if(requested_device.find(dev) != std::string::npos) {
+        available_and_requested_devices.push_back(dev);
+      }
+  }
+  else {
+    available_and_requested_devices = available_devices;
+  }     
+
+  for (auto && dev: available_and_requested_devices) {
     //Check whether the graph is supported on each of the available and requested devices
     graph_supported_by_device = CheckGraphSupported(graph_viewer, dev, dev_error_msg);
-    error_msg += dev + ":" + dev_error_msg + ". ";
+    error_msg += dev + ":" + dev_error_msg + ". "; 
     if(graph_supported_by_device) {
-      if((requested_device.size() > 0 && requested_device.find(dev) != std::string::npos) || requested_device.size() == 0)
-      {
-        usable_devices.push_back(dev);
-        one_device_supports_graph = true;
+      //If one of the devices supports the graph, all of the available devices in heterogenous mode are supporter
+      if(requested_device.find("HETERO") != std::string::npos) {
+        usable_devices = available_and_requested_devices;
+        break;        
       }
+      usable_devices.push_back(dev);
+      one_device_supports_graph = true;
     }
   }
   if(!one_device_supports_graph) {
