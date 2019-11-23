@@ -17,8 +17,9 @@ constexpr const char* OPENVINO = "OpenVINO";
 // Information needed to construct OpenVINO execution providers.
 struct OpenVINOExecutionProviderInfo {
   const char* device{""};
+  const char* precision{""};
 
-  explicit OpenVINOExecutionProviderInfo(const char* dev) : device(dev) {
+  explicit OpenVINOExecutionProviderInfo(const char* dev, const char* prec) : device(dev),precision(prec) {
   }
   OpenVINOExecutionProviderInfo() {
   }
@@ -55,6 +56,7 @@ class OpenVINOExecutionProvider : public IExecutionProvider {
   OpenVINOExecutionProviderInfo info_;
   //User device preference
   std::string requested_device_;
+  std::string requested_precision_;
 };
 
 }  // namespace onnxruntime

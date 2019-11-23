@@ -320,7 +320,7 @@ if (onnxruntime_USE_OPENVINO)
   set_target_properties(onnxruntime_providers_openvino PROPERTIES FOLDER "ONNXRuntime")
   install(DIRECTORY ${PROJECT_SOURCE_DIR}/../include/onnxruntime/core/providers/openvino  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/onnxruntime/core/providers)
   set_target_properties(onnxruntime_providers_openvino PROPERTIES LINKER_LANGUAGE CXX)
-  target_compile_definitions(onnxruntime_providers_openvino PRIVATE OPENVINO_DEVICE="${onnxruntime_OPENVINO_DEVICE}")
+  target_compile_definitions(onnxruntime_providers_openvino PRIVATE OPENVINO_DEVICE="${onnxruntime_OPENVINO_DEVICE}" OPENVINO_PRECISION="${onnxruntime_OPENVINO_PRECISION}")
   if (WIN32)
     target_include_directories(onnxruntime_providers_openvino SYSTEM PUBLIC ${ONNXRUNTIME_ROOT} ${eigen_INCLUDE_DIRS} ${OPENVINO_INCLUDE_DIR} ${OPENVINO_EXTENSIONS_DIR} ${OPENVINO_TBB_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS} ${PYTHONPATH})
    #${pybind11_INCLUDE_DIRS}

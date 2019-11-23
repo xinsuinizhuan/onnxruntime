@@ -30,6 +30,7 @@ OpenVINOExecutionProvider::OpenVINOExecutionProvider(OpenVINOExecutionProviderIn
     : IExecutionProvider{onnxruntime::kOpenVINOExecutionProvider} {
   //ORT_UNUSED_PARAMETER(info);
   requested_device_ = info.device;
+  requested_precision_ = info.precision;
 
   DeviceAllocatorRegistrationInfo device_info({OrtMemTypeDefault, [](int) { return onnxruntime::make_unique<CPUAllocator>(onnxruntime::make_unique<OrtMemoryInfo>(OPENVINO, OrtDeviceAllocator)); }, std::numeric_limits<size_t>::max()});
   InsertAllocator(CreateAllocator(device_info));
@@ -515,7 +516,7 @@ std::string SelectDevice(const onnxruntime::GraphViewer& graph_viewer, std::stri
       requested_devices_not_found.erase(requested_devices_not_found.find("MULTI:"),6);
     }
     std::replace(requested_devices_not_found.begin(),requested_devices_not_found.end(), ',', ' ');
-    if(requested_devices_not_found.size() > 0) {
+    if(requested_devices_not_found.size() > 0 && requested_devices_not_found.find_first_not_of(" ") != std::string::npos) {
       LOGS_DEFAULT(WARNING) << openvino_ep::OpenVINOGraph::log_tag << "Devices (" << requested_devices_not_found.c_str() << ") not found";
     }
     if(!one_requested_device_found) {
@@ -531,6 +532,7 @@ std::string SelectDevice(const onnxruntime::GraphViewer& graph_viewer, std::stri
     for (auto && dev: available_devices)
       if(requested_device.find(dev) != std::string::npos) {
         available_and_requested_devices.push_back(dev);
+        
       }
   }
   else {
@@ -543,12 +545,12 @@ std::string SelectDevice(const onnxruntime::GraphViewer& graph_viewer, std::stri
     error_msg += dev + ":" + dev_error_msg + ". "; 
     if(graph_supported_by_device) {
       //If one of the devices supports the graph, all of the available devices in heterogenous mode are supporter
+      one_device_supports_graph = true;
       if(requested_device.find("HETERO") != std::string::npos) {
         usable_devices = available_and_requested_devices;
         break;        
       }
       usable_devices.push_back(dev);
-      one_device_supports_graph = true;
     }
   }
   if(!one_device_supports_graph) {
@@ -598,7 +600,18 @@ std::vector<std::unique_ptr<ComputeCapability>> OpenVINOExecutionProvider::GetCa
     const onnxruntime::GraphViewer& graph_viewer,
     const std::vector<const KernelRegistry*>& /*kernel_registries*/) const {
   std::vector<std::unique_ptr<ComputeCapability>> result;
-  bool precision_fp32 = true;
+  bool precision_fp32;
+  std::string precision_str = OPENVINO_PRECISION;
+  //If precision is specified in python, overwrite build time value (FP32)
+  if(requested_precision_.size() != 0) {
+    precision_str = requested_precision_;
+  }
+  if(precision_str == "FP32") {
+    precision_fp32 = true;
+  }
+  else {
+    precision_fp32 = false;
+  }
   std::string device_id;
 
   int counter = 0;
@@ -627,7 +640,9 @@ std::vector<std::unique_ptr<ComputeCapability>> OpenVINOExecutionProvider::GetCa
     return result;
   }
 
-  LOGS_DEFAULT(INFO) << openvino_ep::OpenVINOGraph::log_tag << "Using device: " << device_id;
+  precision_str = precision_fp32 ? "FP32" : "FP16";
+  LOGS_DEFAULT(INFO) << openvino_ep::OpenVINOGraph::log_tag << "Using device: " << device_id << ", with precision " << precision_str;
+
 
   std::string model_proto_strbuf;
   model_proto.SerializeToString(&model_proto_strbuf);

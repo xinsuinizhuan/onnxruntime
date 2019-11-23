@@ -16,7 +16,7 @@ std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_Nuphar
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_BrainSlice(uint32_t ip, int, int, bool, const char*, const char*, const char*);
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_Nnapi();
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_Tensorrt(int device_id);
-std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_OpenVINO(const char* device_id);
+std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_OpenVINO(const char* device_id, const char* precision);
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_ACL(int use_arena);
 
 namespace test {
@@ -35,7 +35,7 @@ std::unique_ptr<IExecutionProvider> DefaultTensorrtExecutionProvider() {
 
 std::unique_ptr<IExecutionProvider> DefaultOpenVINOExecutionProvider() {
 #ifdef USE_OPENVINO
-  return CreateExecutionProviderFactory_OpenVINO("CPU")->CreateProvider();
+  return CreateExecutionProviderFactory_OpenVINO("CPU","FP32")->CreateProvider();
 #else
   return nullptr;
 #endif

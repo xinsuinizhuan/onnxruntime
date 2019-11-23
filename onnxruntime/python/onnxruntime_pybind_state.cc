@@ -47,24 +47,8 @@
 #define BACKEND_NGRAPH ""
 #endif
 
-#if OPENVINO_CONFIG_CPU_FP32
-#define BACKEND_OPENVINO "-OPENVINO_CPU_FP32"
-
-#elif OPENVINO_CONFIG_GPU_FP32
-#define BACKEND_OPENVINO "-OPENVINO_GPU_FP32"
-
-#elif OPENVINO_CONFIG_GPU_FP16
-#define BACKEND_OPENVINO "-OPENVINO_GPU_FP16"
-
-#elif OPENVINO_CONFIG_MYRIAD
-#define BACKEND_OPENVINO "-OPENVINO_MYRIAD"
-
-#elif OPENVINO_CONFIG_AUTO
-#define BACKEND_OPENVINO "-OPENVINO_AUTO"
-
-#elif OPENVINO_CONFIG_VAD_M
-#define BACKEND_OPENVINO "-OPENVINO_VAD_M"
-
+#if USE_OPENVINO
+#define BACKEND_OPENVINO "-OPENVINO"
 #else
 #define BACKEND_OPENVINO ""
 #endif
@@ -102,6 +86,7 @@
 #ifdef USE_OPENVINO
 #include "core/providers/openvino/openvino_provider_factory.h"
 std::string openvino_device;
+std::string openvino_precision;
 #endif
 #ifdef USE_NUPHAR
 #include "core/providers/nuphar/nuphar_provider_factory.h"
@@ -117,7 +102,7 @@ std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_CUDA(i
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_Tensorrt(int device_id);
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_Mkldnn(int use_arena);
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_NGraph(const char* ng_backend_type);
-std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_OpenVINO(const char* device);
+std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_OpenVINO(const char* device, const char* precision);
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_Nuphar(bool, const char*);
 std::shared_ptr<IExecutionProviderFactory> CreateExecutionProviderFactory_BrainSlice(uint32_t ip, int, int, bool, const char*, const char*, const char*);
 }  // namespace onnxruntime
@@ -319,7 +304,7 @@ void RegisterExecutionProviders(InferenceSession* sess, const std::vector<std::s
 #endif
     } else if (type == kOpenVINOExecutionProvider) {
 #ifdef USE_OPENVINO
-      RegisterExecutionProvider(sess, *onnxruntime::CreateExecutionProviderFactory_OpenVINO(openvino_device.c_str()));
+      RegisterExecutionProvider(sess, *onnxruntime::CreateExecutionProviderFactory_OpenVINO(openvino_device.c_str(),openvino_precision.c_str()));
       openvino_device.clear();
 #endif
     } else if (type == kNupharExecutionProvider) {
@@ -385,6 +370,13 @@ void addGlobalMethods(py::module& m) {
   m.def("get_openvino_device", []() -> std::string {
     return openvino_device;
   });
+   m.def("set_openvino_precision", [](const std::string& precision) {
+    openvino_precision = precision; },
+    "Set the preferred OpenVINO model precision to be used. If left unset, model will default to precision used during build or what is supported by all available/specified devices." 
+  );
+  m.def("get_openvino_precision", []() -> std::string {
+    return openvino_precision;
+  });
 #endif
 
 #ifdef onnxruntime_PYBIND_EXPORT_OPSCHEMA
@@ -420,7 +412,7 @@ void addGlobalMethods(py::module& m) {
             onnxruntime::CreateExecutionProviderFactory_NGraph("CPU"),
 #endif
 #ifdef USE_OPENVINO
-            onnxruntime::CreateExecutionProviderFactory_OpenVINO("CPU"),
+            onnxruntime::CreateExecutionProviderFactory_OpenVINO("CPU","FP32"),
 #endif
 #ifdef USE_TENSORRT
             onnxruntime::CreateExecutionProviderFactory_Tensorrt(0)

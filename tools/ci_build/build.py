@@ -133,7 +133,7 @@ Use the individual flags to only run the specified stages.
     parser.add_argument("--use_ngraph", action='store_true', help="Build with nGraph.")
     parser.add_argument("--use_openvino", nargs="*", default="AUTO",
                         choices=["CPU","GPU","VAD_M","MYRIAD","VAD_F", "AUTO", "MULTI", "HETERO"], help="Build with OpenVINO for specific hardware.")
-    parser.add_argument("--openvino_precision", nargs="?",
+    parser.add_argument("--openvino_precision", nargs="?", default="FP32",
                         choices=["FP32","FP16"], help="Set OpenVINO model precision" )
     parser.add_argument("--use_dnnlibrary", action='store_true', help="Build with DNNLibrary.")
     parser.add_argument("--use_nsync", action='store_true', help="Build with NSYNC.")
@@ -348,6 +348,7 @@ def generate_build_tree(cmake_path, source_dir, build_dir, cuda_home, cudnn_home
                  "-Donnxruntime_USE_NGRAPH=" + ("ON" if args.use_ngraph else "OFF"),
                  "-Donnxruntime_USE_OPENVINO=" + ("ON" if args.use_openvino else "OFF"),
                  "-Donnxruntime_OPENVINO_DEVICE=" + str(args.use_openvino),
+                 "-Donnxruntime_OPENVINO_PRECISION=" + str(args.openvino_precision),
                  "-Donnxruntime_USE_NNAPI=" + ("ON" if args.use_dnnlibrary else "OFF"),
                  "-Donnxruntime_USE_OPENMP=" + ("ON" if args.use_openmp and not args.use_dnnlibrary and not args.use_mklml and not args.use_ngraph else "OFF"),
                  "-Donnxruntime_USE_TVM=" + ("ON" if args.use_tvm else "OFF"),

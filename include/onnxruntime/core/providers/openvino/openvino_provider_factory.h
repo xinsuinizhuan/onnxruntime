@@ -11,7 +11,7 @@ extern "C" {
  * \param device_id cuda device id, starts from zero.
  */
 ORT_API_STATUS(OrtSessionOptionsAppendExecutionProvider_OpenVINO,
-    _In_ OrtSessionOptions* options, const char* device_id);
+    _In_ OrtSessionOptions* options, const char* device_id, const char* precision);
 
 #ifdef __cplusplus
 }
