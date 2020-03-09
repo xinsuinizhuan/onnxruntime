@@ -816,6 +816,7 @@ OpenVINOExecutionProvider::GetCapability(const onnxruntime::GraphViewer& graph_v
   ORT_UNUSED_PARAMETER(kernel_registries);
 
   std::vector<std::unique_ptr<ComputeCapability>> result;
+  std::cout << "In the OpenVINO EP" << std::endl;
 
   //TODO: Handle If and Loop operators
   if (graph_viewer.IsSubgraph()) {
