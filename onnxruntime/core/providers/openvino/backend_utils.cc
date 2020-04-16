@@ -8,6 +8,11 @@
 #include <fstream>
 
 #include <inference_engine.hpp>
+// IE defines a macro 'OPTIONAL' that conflicts the remaining headers using MSVC
+#if defined(_MSC_VER)
+#undef OPTIONAL
+#endif
+
 #include <ngraph/frontend/onnx_import/onnx.hpp>
 
 // FIXME: These should not be needed after v1 ops
@@ -29,7 +34,11 @@ namespace backend_utils {
 
 //TODO: Remove this before production
 bool IsDebugEnabled() {
-  return (std::getenv("UEP_ENABLE_DEBUG") != nullptr);
+  #ifdef __linux__
+    return (std::getenv("UEP_ENABLE_DEBUG") != nullptr);
+  #else
+    return false;
+  #endif
 }
 
 void DumpOnnxModelProto(const ONNX_NAMESPACE::ModelProto& model_proto, std::string file_name) {
@@ -201,7 +210,7 @@ GetOutputTensors(Ort::CustomOpApi& ort, OrtKernelContext* context, size_t batch_
     }
 
     size_t num_dims = graph_output_dims.size();
-    int64_t output_shape[num_dims];
+    auto output_shape = new int64_t[num_dims];
     for (size_t j = 0; j < num_dims; j++) {
       output_shape[j] = static_cast<int64_t>(graph_output_dims[j]);
     }
@@ -212,6 +221,7 @@ GetOutputTensors(Ort::CustomOpApi& ort, OrtKernelContext* context, size_t batch_
     int index = it->second;
 
     output_tensors.push_back(ort.KernelContext_GetOutput(context, index, output_shape, num_dims));
+    delete output_shape;
   }
   return output_tensors;
 }

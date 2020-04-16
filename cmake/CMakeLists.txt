@@ -707,13 +707,9 @@ if(onnxruntime_USE_OPENVINO)
     message(FATAL_ERROR "Please set onnxruntime_USE_FULL_PROTOBUF=ON for OpenVINO execution provider.")
   endif()
 
-  if(WIN32)
-      message(FATAL_ERROR "Building on Windows using OpenVINO execution provider is not supported")
-  endif()
-
   add_definitions(-DUSE_OPENVINO=1)
   include(openvino)
-  list(APPEND onnxruntime_EXTERNAL_LIBRARIES ngraph)
+  list(APPEND onnxruntime_EXTERNAL_LIBRARIES ovep_ngraph)
   list(APPEND onnxruntime_EXTERNAL_DEPENDENCIES project_ngraph)
 
 	if (onnxruntime_USE_OPENVINO_BINARY)
@@ -738,6 +734,10 @@ if(onnxruntime_USE_OPENVINO)
 
 	if(onnxruntime_USE_OPENVINO_VAD_M)
 		add_definitions(-DOPENVINO_CONFIG_VAD_M=1)
+	endif()
+
+	if(onnxruntime_USE_OPENVINO_VAD_F)
+		add_definitions(-DOPENVINO_CONFIG_VAD_F=1)
 	endif()
 
 endif()

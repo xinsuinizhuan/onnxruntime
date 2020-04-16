@@ -15,30 +15,9 @@ set(ngraph_branch "origin/rov.2020.2")
 
 # Libraries for python package.
 if (WIN32)
-    set(NGRAPH_SHARED_LIB ngraph.dll)
-    set(NGRAPH_CPU_BACKEND_SHARED_LIB cpu_backend.dll)
-    set(NGRAPH_IOMP5MD_SHARED_LIB libiomp5md.dll)
-    set(NGRAPH_MKLDNN_SHARED_LIB mkldnn.dll)
-    set(NGRAPH_MKLML_SHARED_LIB mklml.dll)
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        set(NGRAPH_TBB_SHARED_LIB tbb_debug.dll)
-    else()
-        set(NGRAPH_TBB_SHARED_LIB tbb.dll)
-    endif()
+    set(NGRAPH_SHARED_LIB ovep_ngraph.dll)
 else()
-    set(NGRAPH_SHARED_LIB libngraph.so.0.0)
-    # set(NGRAPH_CODEGEN_SHARED_LIB libcodegen.so)
-    # set(NGRAPH_CPU_BACKEND_SHARED_LIB libcpu_backend.so)
-    # set(NGRAPH_IOMP5MD_SHARED_LIB libiomp5.so)
-    # set(NGRAPH_MKLDNN_SHARED_LIB libmkldnn.so)
-    # set(NGRAPH_MKLML_SHARED_LIB libmklml_intel.so)
-    # if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    #     set(NGRAPH_TBB_SHARED_LIB libtbb_debug.so)
-    #     set(NGRAPH_TBB_SHARED_LIB_2 libtbb_debug.so.2)
-    # else()
-    #     set(NGRAPH_TBB_SHARED_LIB libtbb.so)
-    #     set(NGRAPH_TBB_SHARED_LIB_2 libtbb.so.2)
-    # endif()
+    set(NGRAPH_SHARED_LIB libovep_ngraph.so)
 endif()
 
 # discard prior changes due to unblock incremental builds.
@@ -54,22 +33,37 @@ if (MSVC)
             GIT_SHALLOW TRUE
             GIT_CONFIG core.autocrlf=input
             PATCH_COMMAND ${NGRAPH_PATCH_DISCARD_COMMAND}
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/patches/ngraph/ngraph_onnx.cmake ${ngraph_SRC}/cmake/external_onnx.cmake
-            COMMAND git apply --ignore-space-change --ignore-whitespace ${PROJECT_SOURCE_DIR}/patches/ngraph/ngraph_protobuf.patch
-            COMMAND git apply --ignore-space-change --ignore-whitespace ${PROJECT_SOURCE_DIR}/patches/ngraph/dnnl_v1.patch
+            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/patches/openvino/ngraph_onnx.cmake ${ngraph_SRC}/cmake/external_onnx.cmake
+            COMMAND git apply --ignore-space-change --ignore-whitespace ${PROJECT_SOURCE_DIR}/patches/openvino/ngraph_protobuf.patch
+            COMMAND git apply --ignore-space-change --ignore-whitespace ${PROJECT_SOURCE_DIR}/patches/openvino/lib_name.patch
             CMAKE_ARGS
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                -DNGRAPH_USE_SYSTEM_PROTOBUF=FALSE
                 -DNGRAPH_ONNX_IMPORT_ENABLE=TRUE
+                -DNGRAPH_JSON_ENABLE=FALSE
+                -DNGRAPH_USE_SYSTEM_PROTOBUF=FALSE
                 -DNGRAPH_UNIT_TEST_ENABLE=FALSE
+                -DNGRAPH_TEST_UTIL_ENABLE=FALSE
+                -DNGRAPH_TOOLS_ENABLE=FALSE
+                -DNGRAPH_CPU_ENABLE=FALSE
+                -DNGRAPH_INTERPRETER_ENABLE=FALSE
+                -DNGRAPH_NOP_ENABLE=FALSE
+                -DNGRAPH_GPU_ENABLE=FALSE
+                -DNGRAPH_GENERIC_CPU_ENABLE=FALSE
+                -DNGRAPH_PLAIDML_ENABLE=FALSE
+                -DNGRAPH_ENABLE_CPU_CONV_AUTO=FALSE
+                -DNGRAPH_PYTHON_BUILD_ENABLE=FALSE
+                -DNGRAPH_FAST_MATH_ENABLE=FALSE
+                -DNGRAPH_DYNAMIC_COMPONENTS_ENABLE=FALSE
+                -DNGRAPH_NATIVE_ARCH_ENABLE=FALSE
                 -DCMAKE_INSTALL_PREFIX=${ngraph_INSTALL_DIR}
                 -Dprebuilt_ONNX_BINARY_DIR=${prebuilt_ONNX_BINARY_DIR}
                 -Dprebuilt_ONNX_SOURCE_DIR=${prebuilt_ONNX_SOURCE_DIR}
             DEPENDS onnx
         )
-    add_library(ngraph STATIC IMPORTED)
-    set_property(TARGET ngraph PROPERTY IMPORTED_LOCATION ${ngraph_LIBRARIES}/${NGRAPH_STATIC_LIB})
-    set_property(TARGET ngraph PROPERTY IMPORTED_IMPLIB ${ngraph_LIBRARIES}/ngraph.lib)
+    add_library(ovep_ngraph SHARED IMPORTED)
+    set_property(TARGET ovep_ngraph PROPERTY IMPORTED_LOCATION ${ngraph_LIBRARIES}/${NGRAPH_SHARED_LIB})
+    set_property(TARGET ovep_ngraph PROPERTY IMPORTED_IMPLIB ${ngraph_LIBRARIES}/ovep_ngraph.lib)
+
 else()
     ExternalProject_Add(project_ngraph
             PREFIX ngraph
@@ -81,35 +75,34 @@ else()
             COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/patches/openvino/ngraph_onnx.cmake ${ngraph_SRC}/cmake/external_onnx.cmake
             # TODO: Use cmake.file+copy as above.
             COMMAND git apply --ignore-space-change --ignore-whitespace ${PROJECT_SOURCE_DIR}/patches/openvino/ngraph_protobuf.patch
-            # COMMAND git apply --ignore-space-change --ignore-whitespace ${PROJECT_SOURCE_DIR}/patches/ngraph/dnnl_v1.patch
+            COMMAND git apply --ignore-space-change --ignore-whitespace ${PROJECT_SOURCE_DIR}/patches/openvino/lib_name.patch
             CMAKE_ARGS
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DNGRAPH_ONNX_IMPORT_ENABLE=TRUE
-            -DNGRAPH_LIB_VERSIONING_ENABLE=TRUE
-            -DNGRAPH_JSON_ENABLE=FALSE
-            -DNGRAPH_USE_SYSTEM_PROTOBUF=FALSE
-            -DNGRAPH_UNIT_TEST_ENABLE=FALSE
-            -DNGRAPH_TEST_UTIL_ENABLE=FALSE
-            -DNGRAPH_TOOLS_ENABLE=FALSE
-            -DNGRAPH_CPU_ENABLE=FALSE
-            -DNGRAPH_INTERPRETER_ENABLE=FALSE
-            -DNGRAPH_NOP_ENABLE=FALSE
-            -DNGRAPH_GPU_ENABLE=FALSE
-            -DNGRAPH_GENERIC_CPU_ENABLE=FALSE
-            -DNGRAPH_PLAIDML_ENABLE=FALSE
-            -DNGRAPH_ENABLE_CPU_CONV_AUTO=FALSE
-            -DNGRAPH_PYTHON_BUILD_ENABLE=FALSE
-            -DNGRAPH_FAST_MATH_ENABLE=FALSE
-            -DNGRAPH_DYNAMIC_COMPONENTS_ENABLE=FALSE
-            -DNGRAPH_NATIVE_ARCH_ENABLE=FALSE
+                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DNGRAPH_ONNX_IMPORT_ENABLE=TRUE
+                -DNGRAPH_JSON_ENABLE=FALSE
+                -DNGRAPH_USE_SYSTEM_PROTOBUF=FALSE
+                -DNGRAPH_UNIT_TEST_ENABLE=FALSE
+                -DNGRAPH_TEST_UTIL_ENABLE=FALSE
+                -DNGRAPH_TOOLS_ENABLE=FALSE
+                -DNGRAPH_CPU_ENABLE=FALSE
+                -DNGRAPH_INTERPRETER_ENABLE=FALSE
+                -DNGRAPH_NOP_ENABLE=FALSE
+                -DNGRAPH_GPU_ENABLE=FALSE
+                -DNGRAPH_GENERIC_CPU_ENABLE=FALSE
+                -DNGRAPH_PLAIDML_ENABLE=FALSE
+                -DNGRAPH_ENABLE_CPU_CONV_AUTO=FALSE
+                -DNGRAPH_PYTHON_BUILD_ENABLE=FALSE
+                -DNGRAPH_FAST_MATH_ENABLE=FALSE
+                -DNGRAPH_DYNAMIC_COMPONENTS_ENABLE=FALSE
+                -DNGRAPH_NATIVE_ARCH_ENABLE=FALSE
                 -DCMAKE_INSTALL_PREFIX=${ngraph_INSTALL_DIR}
                 -Dprebuilt_ONNX_BINARY_DIR=${prebuilt_ONNX_BINARY_DIR}
                 -Dprebuilt_ONNX_SOURCE_DIR=${prebuilt_ONNX_SOURCE_DIR}
             DEPENDS onnx
         )
 
-    add_library(ngraph SHARED IMPORTED)
-    set_property(TARGET ngraph PROPERTY IMPORTED_LOCATION ${ngraph_LIBRARIES}/${NGRAPH_SHARED_LIB})
+    add_library(ovep_ngraph SHARED IMPORTED)
+    set_property(TARGET ovep_ngraph PROPERTY IMPORTED_LOCATION ${ngraph_LIBRARIES}/${NGRAPH_SHARED_LIB})
 endif()
-add_dependencies(ngraph project_ngraph)
+add_dependencies(ovep_ngraph project_ngraph)
 include_directories(${ngraph_INCLUDE_DIRS})

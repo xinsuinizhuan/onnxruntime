@@ -2,6 +2,11 @@
 // Licensed under the MIT License
 
 #include <inference_engine.hpp>
+// IE defines a macro 'OPTIONAL' that conflicts the remaining headers using MSVC
+#if defined(_MSC_VER)
+#undef OPTIONAL
+#endif
+
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include "core/graph/graph.h"
@@ -113,9 +118,9 @@ BackendManager::GetModelProtoFromFusedNode(const onnxruntime::Node* fused_node,
   ORT_ENFORCE(node_function != nullptr, "Could not extract function body for node: ", name);
 
   const onnxruntime::Graph& node_subgraph = node_function->Body();
-  onnxruntime::Model model{node_subgraph.Name(), true, ModelMetaData{}, "",
+  onnxruntime::Model model(node_subgraph.Name(), true, ModelMetaData{}, onnxruntime::ToPathString(""),
                            IOnnxRuntimeOpSchemaRegistryList{}, node_subgraph.DomainToVersionMap(),
-                           std::vector<ONNX_NAMESPACE::FunctionProto>(), logger};
+                           std::vector<ONNX_NAMESPACE::FunctionProto>(), logger);
 
   ONNX_NAMESPACE::ModelProto model_proto = model.ToProto();
   model_proto.set_ir_version(ONNX_NAMESPACE::Version::IR_VERSION);
