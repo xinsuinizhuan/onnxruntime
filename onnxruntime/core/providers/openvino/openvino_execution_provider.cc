@@ -828,6 +828,7 @@ OpenVINOExecutionProvider::GetCapability(const onnxruntime::GraphViewer& graph_v
   ORT_UNUSED_PARAMETER(kernel_registries);
 
   std::vector<std::unique_ptr<ComputeCapability>> result;
+  std::cout << "In the OpenVINO EP" << std::endl;
 
   if (graph_viewer.IsSubgraph()) {
     return result;
@@ -881,6 +882,7 @@ OpenVINOExecutionProvider::GetCapability(const onnxruntime::GraphViewer& graph_v
     AppendClusterToSubGraph(graph_viewer.GetNodesInTopologicalOrder(), inputs, outputs, result);
 
     LOGS_DEFAULT(INFO) << "[OpenVINO-EP] Model is fully supported by OpenVINO";
+    std::cout << "Model is fully supported on OpenVINO" << std::endl;
     openvino_ep::BackendManager::GetGlobalContext().is_wholly_supported_graph = true;
 
   } else {  // unsupported_nodes_idx.empty()

@@ -150,6 +150,7 @@ void BasicBackend::Infer(Ort::CustomOpApi& ort, OrtKernelContext* context) {
   CompleteAsyncInference(ort, output_tensors, infer_request_, ie_cnn_network_);
 
   LOGS_DEFAULT(INFO) << log_tag << "Inference successful";
+  std::cout << "Inference successful" << std::endl;
 }
 
 }  // namespace openvino_ep
