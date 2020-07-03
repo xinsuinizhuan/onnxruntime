@@ -98,6 +98,7 @@ bool IsOpSupported(std::string name, std::string device) {
       "Conv",
       "ConvTranspose",
       "DepthToSpace",
+      "DetectionOutput",
       "Div",
       "Dropout",
       "Elu",
@@ -123,6 +124,7 @@ bool IsOpSupported(std::string name, std::string device) {
       "Pad",
       "Pow",
       "PRelu",
+      "PriorBoxClustered",
       "ReduceMax",
       "ReduceMean",
       "ReduceMin",
@@ -423,12 +425,12 @@ static bool IsUnsupportedOpMode(const Node* node, const onnxruntime::GraphViewer
     const auto& shape_input = node->InputDefs()[1];
     return !graph_viewer.IsConstantInitializer(shape_input->Name(), true);
   } else if (optype == "ArgMax" || optype == "ArgMin") {
-    // tensor type supports float as input for argmax and argmin  
+    // tensor type supports float as input for argmax and argmin
     auto dtype = node->InputDefs()[0]->TypeAsProto()->tensor_type().elem_type();
     if (dtype != ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_FLOAT) {
-      return true;      
+      return true;
     }
-  }  
+  }
 
   //Op doesn't fall into known any of unsupported modes.
   return false;

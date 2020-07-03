@@ -4,6 +4,8 @@
 #include "core/framework/tensorprotoutils.h"
 #include "core/graph/constants.h"
 #include "core/graph/contrib_ops/attn_lstm_schema_defs.h"
+#include "core/graph/contrib_ops/prior_box_clustered_schema_defs.h"
+#include "core/graph/contrib_ops/detection_output_schema_defs.h"
 #include "core/graph/contrib_ops/contrib_defs.h"
 #include "core/graph/contrib_ops/nchwc_schema_defs.h"
 #include "core/graph/contrib_ops/range_schema_defs.h"
@@ -1399,7 +1401,10 @@ activation and leaky_relu_alpha.)DOC")
       })
       .SetDoc(R"DOC(ExpandDims echo operator.)DOC");
 
+  std::cout << "Registering " << std::endl;
   ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(AttnLSTM, RegisterAttnLSTMContribOpSchema);
+  ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(PriorBoxClustered, RegisterPriorBoxClusteredContribOpSchema);
+  ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(DetectionOutput, RegisterDetectionOutputContribOpSchema);
   ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(Range, RegisterRangeOpSchema);
 
   static const char* QuantizeLinear_ver1_doc = R"DOC(
