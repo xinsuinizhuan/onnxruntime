@@ -13,136 +13,10 @@ using ::ONNX_NAMESPACE::AttributeProto;
 using ::ONNX_NAMESPACE::OPTIONAL_VALUE;
 using ::ONNX_NAMESPACE::OpSchema;
 
-// This Doc based on LSTM_ver7, and modification
 static const char* PriorBoxClustered_ver1_doc = R"DOC(
-Computes an one-layer RNN where its RNN Cell is an AttentionWrapper wrapped a LSTM Cell. The RNN layer
-contains following basic component: LSTM Cell, Bahdanau Attention Mechanism, AttentionWrapp.
 
-Activation functions:
-
-  Relu(x)                - max(0, x)
-
-  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-
-  Sigmoid(x)             - 1/(1 + e^{-x})
-
-  (NOTE: Below are optional)
-
-  Affine(x)              - alpha*x + beta
-
-  LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-  ThresholdedRelu(x)     - x if x >= alpha else 0
-
-  ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-  Softsign(x)            - x/(1 + |x|)
-
-  Softplus(x)            - log(1 + e^x)
-
-  Softmax(x)             - exp(x) / sum(exp(x))
-
-Bahdanau Attention Mechanism:
-    `M` -  Memory tensor.
-
-    `VALUES` - masked Memory by its real sequence length.
-
-    `MW` - Memory layer weight.
-
-    `KEYS` - Processed memory tensor by the memory layer.
-             KEYS = M * MW
-
-    `Query` - Query tensor, normally at specific time step in sequence.
-
-    `QW` - Query layer weight in the attention mechanism
-
-    `PQ` - processed query,  = `Query` * `QW`
-
-    `V' - attention vector
-
-    `ALIGN` - calculated alignment based on Query and KEYS
-        ALIGN = softmax(reduce_sum(`V` * Tanh(`KEYS` + `PQ`)))
-
-    `CONTEXT` - context based on `ALIGN` and `VALUES`
-        CONTEXT = `ALIGN` * `VALUES`
-
-
-LSTM Cell:
-  `X` - input tensor concat with attention state in the attention wrapper
-
-  `i` - input gate
-
-  `o` - output gate
-
-  `f` - forget gate
-
-  `c` - cell gate
-
-  `t` - time step (t-1 means previous time step)
-
-  `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-
-  `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-
-  `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-
-  `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-
-  `P[iof]`  - P peephole weight vector for input, output, and forget gates
-
-  `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-
-  `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-
-  `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-
-  `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-
-  `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-
-  `H` - Hidden state
-
-  `num_directions` - 2 if direction == bidirectional else 1
-
-  Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
-
-    - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-
-    - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-
-    - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-
-    - Ct = ft (.) Ct-1 + it (.) ct
-
-    - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-
-    - Ht = ot (.) h(Ct)
-
-
-AttentionWrapp Notations:
-  `lstm()' - wrapped inner cell.
-           Ht, Ct = lstm(concat(Xt, ATTNt-1), Ct-1)
-
-  `am()` - attention mechanism the wrapper used.
-           CONTEXTt, ALIGNt = am(Ht, ALIGNt-1)
-
-  `AW` - attention layer weights, optional.
-
-  `ATTN` - attention state, initial is zero. If `AW` provided, it is the output of the attention layer,
-                ATTNt = concat(Ht, CONTEXTt) * AW
-           otherwise,
-                ATTNt = CONTEXTt
-
-RNN layer output:
-  `Y` - if needed is the sequence of Ht from lstm cell.
-
-  `Y_h` - is the last valid H from lstm cell.
-
-  `Y_c` - is the last valid C from lstm cell.
+PriorBoxClustered operation generates prior boxes of
+specified sizes normalized to the input image size.
 
 )DOC";
 
@@ -152,88 +26,70 @@ OpSchema& RegisterPriorBoxClusteredContribOpSchema(OpSchema&& op_schema){
     .SetDomain(kOnnxDomain)
     .Attr(
         "width",
-        "A list of 3 (or 6 if bidirectional) activation functions "
-        "for input, output, forget, cell, and hidden. The activation functions must "
-        "be one of the activation functions specified above. Optional: See the equations "
-        "for default if not specified.",
+        "width specifies desired boxes widths in pixels.",
         AttributeProto::FLOATS,
         OPTIONAL_VALUE)
     .Attr(
         "height",
-        "A list of 3 (or 6 if bidirectional) activation functions "
-        "for input, output, forget, cell, and hidden. The activation functions must "
-        "be one of the activation functions specified above. Optional: See the equations "
-        "for default if not specified.",
+        "height specifies desired boxes heights in pixels.",
         AttributeProto::FLOATS,
         OPTIONAL_VALUE)
     .Attr(
         "clip",
-        "Optional scaling values used by some activation functions. The values are consumed "
-        "in the order of activation functions, for example (f, g, h) in LSTM. Default values "
-        "are the same as of corresponding ONNX operators.For example with LeakyRelu, the "
-        "default alpha is 0.01.",
+        "clip is a flag that denotes if each value in the"
+        "output tensor should be clipped within [0,1]",
         AttributeProto::INT,
         OPTIONAL_VALUE)
     .Attr(
         "flip",
-        "Optional scaling values used by some activation functions. The values are consumed "
-        "in the order of activation functions, for example (f, g, h) in LSTM. Default values "
-        "are the same as of corresponding ONNX operators.For example with LeakyRelu, the "
-        "default alpha is 0.01.",
+        "flip is a flag that denotes that each aspect_ratio is duplicated and flipped.",
         AttributeProto::INT,
         OPTIONAL_VALUE)
     .Attr(
         "step",
-        "Optional scaling values used by some activation functions. The values are consumed in "
-        "the order of activation functions, for example (f, g, h) in LSTM. Default values are "
-        "the same as of corresponding ONNX operators.",
+        "step is a distance between box centers. For example, step equal 85 means that"
+        "the distance between neighborhood prior boxes centers is 85. If both step_h"
+        "and step_w are 0 then they are updated with value of step. If after that they"
+        "are still 0 then they are calculated as input image width(height) divided with"
+        "first input width(height).",
         AttributeProto::FLOAT,
         OPTIONAL_VALUE)
     .Attr(
         "step_w",
-        "Optional scaling values used by some activation functions. The values are consumed in "
-        "the order of activation functions, for example (f, g, h) in LSTM. Default values are "
-        "the same as of corresponding ONNX operators.",
+        "TBD",
         AttributeProto::FLOAT,
         OPTIONAL_VALUE)
     .Attr(
         "step_h",
-        "Optional scaling values used by some activation functions. The values are consumed in "
-        "the order of activation functions, for example (f, g, h) in LSTM. Default values are "
-        "the same as of corresponding ONNX operators.",
+        "TBD",
         AttributeProto::FLOAT,
         OPTIONAL_VALUE)
     .Attr(
         "img_w",
-        "Optional scaling values used by some activation functions. The values are consumed in "
-        "the order of activation functions, for example (f, g, h) in LSTM. Default values are "
-        "the same as of corresponding ONNX operators.",
+        "img_w specifies width of input image. These attributes are taken from the second"
+        "input image_size width unless provided explicitly as the value for this attributes.",
         AttributeProto::INT,
         OPTIONAL_VALUE)
     .Attr(
         "img_h",
-        "Optional scaling values used by some activation functions. The values are consumed in "
-        "the order of activation functions, for example (f, g, h) in LSTM. Default values are "
-        "the same as of corresponding ONNX operators.",
+        "img_h specifies height of input image. These attributes are taken from the second"
+        "input image_size height unless provided explicitly as the value for this attributes.",
         AttributeProto::INT,
         OPTIONAL_VALUE)
     .Attr(
         "img_size",
-        "Optional scaling values used by some activation functions. The values are consumed in "
-        "the order of activation functions, for example (f, g, h) in LSTM. Default values are "
-        "the same as of corresponding ONNX operators.",
+        "TBD",
         AttributeProto::INT,
         OPTIONAL_VALUE)
     .Attr(
         "offset",
-        "Cell clip threshold. Clipping bounds the elements of a tensor in the range of "
-        "[-threshold, +threshold] and is applied to the input of activations. No clip if not "
-        "specified.",
+        "offset is a shift of box respectively to top left corner. For example, "
+        "offset equal 85 means that the shift of neighborhood prior boxes centers is 85.",
         AttributeProto::FLOAT,
         OPTIONAL_VALUE)
     .Attr(
         "variance",
-        "Couple the input and forget gates if 1, default 0.",
+        "variance denotes a variance of adjusting bounding boxes.",
         AttributeProto::FLOATS,
         OPTIONAL_VALUE)
     .TypeConstraint(
@@ -243,21 +99,21 @@ OpSchema& RegisterPriorBoxClusteredContribOpSchema(OpSchema&& op_schema){
     .Input(
         0,
         "X",
-        "The input sequences packed (and potentially padded) into one 3-D tensor "
-        "with the shape of `[seq_length, batch_size, input_size]`",
+        "1D tensor with two integer elements [height, width]. Specifies the spatial"
+        "size of generated grid with boxes",
         "T")
     .Input(
         1,
         "W",
-        "The weight tensor for the gates. Concatenation of `W[iofc]` and "
-        "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
-        "`[num_directions, 4*hidden_size, input_size]`.",
+        "1D tensor with two integer elements [image_height, image_width]"
+        "that specifies shape of the image for which boxes are generated",
         "T")
     .Output(
         0,
         "Y",
-        "A tensor that concats all the intermediate output values of the hidden. "
-        "It has shape `[seq_length, num_directions, batch_size, hidden_size]`",
+        "2D tensor of shape [2, 4 * height * width * priors_per_point] with box coordinates."
+        "The priors_per_point is the number of boxes generated per each grid element."
+        "The number depends on layer attribute values",
         "T",
         OpSchema::Optional)
     .SetDoc(PriorBoxClustered_ver1_doc);

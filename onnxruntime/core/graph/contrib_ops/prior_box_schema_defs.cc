@@ -13,7 +13,6 @@ using ::ONNX_NAMESPACE::AttributeProto;
 using ::ONNX_NAMESPACE::OPTIONAL_VALUE;
 using ::ONNX_NAMESPACE::OpSchema;
 
-// This Doc based on LSTM_ver7, and modification
 static const char* PriorBox_ver1_doc = R"DOC(
 
 PriorBox operation generates prior boxes of specified sizes
@@ -41,15 +40,15 @@ OpSchema& RegisterPriorBoxContribOpSchema(OpSchema&& op_schema){
     .Attr(
         "aspect_ratio",
         "aspect_ratio is a variance of aspect ratios."
-        "Duplicate values are ignored. For example, aspect_ratio equal "2.0,3.0" means that"
+        "Duplicate values are ignored. For example, aspect_ratio equal '2.0,3.0' means that"
         "for the first box aspect_ratio is equal to 2.0 and for the second box is 3.0.",
         AttributeProto::FLOATS,
         OPTIONAL_VALUE)
     .Attr(
         "flip",
         "flip is a flag that denotes that each aspect_ratio is duplicated and flipped."
-        "For example, flip equals 1 and aspect_ratio equals to "4.0,2.0" mean that "
-        "aspect_ratio is equal to "4.0,2.0,0.25,0.5" ",
+        "For example, flip equals 1 and aspect_ratio equals to '4.0,2.0' mean that "
+        "aspect_ratio is equal to '4.0,2.0,0.25,0.5' ",
         AttributeProto::INT,
         OPTIONAL_VALUE)
     .Attr(
