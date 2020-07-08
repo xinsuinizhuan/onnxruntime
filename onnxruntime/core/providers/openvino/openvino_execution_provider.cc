@@ -124,6 +124,7 @@ bool IsOpSupported(std::string name, std::string device) {
       "Pad",
       "Pow",
       "PRelu",
+      "PriorBox",
       "PriorBoxClustered",
       "ReduceMax",
       "ReduceMean",
