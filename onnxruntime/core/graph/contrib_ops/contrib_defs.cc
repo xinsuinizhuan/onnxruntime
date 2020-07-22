@@ -1401,9 +1401,9 @@ activation and leaky_relu_alpha.)DOC")
       })
       .SetDoc(R"DOC(ExpandDims echo operator.)DOC");
 
-  std::cout << "Registering " << std::endl;
   ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(AttnLSTM, RegisterAttnLSTMContribOpSchema);
   ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(PriorBoxClustered, RegisterPriorBoxClusteredContribOpSchema);
+  ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(PriorBox, RegisterPriorBoxContribOpSchema);
   ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(DetectionOutput, RegisterDetectionOutputContribOpSchema);
   ONNX_CONTRIB_OPERATOR_SCHEMA_ELSEWHERE(Range, RegisterRangeOpSchema);
 
