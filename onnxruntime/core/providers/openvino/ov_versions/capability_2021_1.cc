@@ -159,7 +159,7 @@ bool IsOpSupported(std::string name, std::string device) {
     "Not",
     "Selu",
     "Tan",
-    
+
   };
   std::set<std::string> supported_ops_vpu = {
     "Expand",
@@ -742,6 +742,7 @@ GetCapability_2021_1(const onnxruntime::GraphViewer& graph_viewer, std::string d
     AppendClusterToSubGraph(graph_viewer.GetNodesInTopologicalOrder(), inputs, outputs, result);
 
     LOGS_DEFAULT(INFO) << "[OpenVINO-EP] Model is fully supported by OpenVINO";
+    std::cout << "Model is fully supported on OpenVINO" << std::endl;
     openvino_ep::BackendManager::GetGlobalContext().is_wholly_supported_graph = true;
 
   } else {  // unsupported_nodes_idx.empty()
