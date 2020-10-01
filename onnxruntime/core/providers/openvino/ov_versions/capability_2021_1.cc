@@ -68,6 +68,7 @@ bool IsOpSupported(std::string name, std::string device) {
       "Conv",
       "ConvTranspose",
       "DepthToSpace",
+      "DetectionOutput",
       "Div",
       "Dropout",
       "Elu",
@@ -98,6 +99,7 @@ bool IsOpSupported(std::string name, std::string device) {
       "Pad",
       "Pow",
       "PRelu",
+      "PriorBoxClustered",
       "Reciprocal",
       "ReduceMax",
       "ReduceMean",
@@ -159,7 +161,7 @@ bool IsOpSupported(std::string name, std::string device) {
     "Not",
     "Selu",
     "Tan",
-    
+
   };
   std::set<std::string> supported_ops_vpu = {
     "Expand",

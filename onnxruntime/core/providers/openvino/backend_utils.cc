@@ -10,12 +10,15 @@
 #include <inference_engine.hpp>
 
 #include <ngraph/frontend/onnx_import/onnx.hpp>
+#include <ngraph/frontend/onnx_import/onnx_utils.hpp>
 #include <ngraph/pass/convert_fp32_to_fp16.hpp>
 #include <ngraph/pass/constant_folding.hpp>
 
 #include "core/session/onnxruntime_cxx_api.h"
 #include "core/graph/graph.h"
 #include "core/common/logging/logging.h"
+#include "custom_ops/detection_output.hpp"
+#include "custom_ops/prior_box_clustered.hpp"
 
 #include "backend_utils.h"
 
@@ -57,7 +60,10 @@ CreateCNNNetwork(const ONNX_NAMESPACE::ModelProto& model_proto, const GlobalCont
     DumpOnnxModelProto(model_proto, subgraph_context.subgraph_name + "_static.onnx");
   }
 #endif
-
+  ngraph::onnx_import::register_operator(
+    "DetectionOutput", 1, "", ngraph::onnx_import::op::set_1::detection_output);
+  ngraph::onnx_import::register_operator(
+    "PriorBoxClustered", 1, "", ngraph::onnx_import::op::set_1::prior_box_clustered);
   try {
     ng_function = ngraph::onnx_import::import_onnx_model(model_stream);
     LOGS_DEFAULT(INFO) << "ONNX Import Done";
