@@ -60,8 +60,10 @@ VADMBackend::VADMBackend(const ONNX_NAMESPACE::ModelProto& model_proto,
   // Loading model to the plugin
   //If graph is fully supported and batching is enabled, load the network onto all VPU's and infer
   std::vector<InferenceEngine::ExecutableNetwork> exe_networks;
+  auto num_of_hddl_par = global_context_.ie_core.GetMetric("HDDL", "VPU_HDDL_DEVICE_NUM");
+  auto num_of_hddl = num_of_hddl_par.as<int>();
   if(global_context_.is_wholly_supported_graph && subgraph_context_.enable_batching){
-    for(int j = 0; j < 8; j++){
+    for(int j = 0; j < num_of_hddl; j++){
       InferenceEngine::ExecutableNetwork exe_network;
     #if defined(OPENVINO_2021_1)
       config[InferenceEngine::HDDL_DEVICE_TAG] = global_context_.deviceTags[j];
@@ -94,7 +96,7 @@ VADMBackend::VADMBackend(const ONNX_NAMESPACE::ModelProto& model_proto,
   //If the graph is not fully supported, need to schedule each subgraph on different VPU
   //If batching is disabled just schedule on the first VPU
   else {
-    i = GetFirstAvailableDevice(global_context);
+    i = GetFirstAvailableDevice(global_context, num_of_hddl);
     LOGS_DEFAULT(INFO) << log_tag << "Device Tag is: " << i;
   #if defined(OPENVINO_2021_1)
     config[InferenceEngine::HDDL_DEVICE_TAG] = global_context_.deviceTags[i];

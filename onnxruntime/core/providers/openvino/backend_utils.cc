@@ -231,11 +231,11 @@ GetOutputTensor(Ort::CustomOpApi& ort, OrtKernelContext* context,
 }
 #endif
 
-int GetFirstAvailableDevice(GlobalContext& global_context){
+int GetFirstAvailableDevice(GlobalContext& global_context, int num_of_hddl){
 
   int i = 0;
   //Get the first available VAD-M device and set the device to busy
-  while(i < 8){
+  while(i < num_of_hddl){
     bool device = global_context.deviceAvailableList[i];
     if(device){
       global_context.deviceAvailableList[i] = false;
@@ -245,10 +245,10 @@ int GetFirstAvailableDevice(GlobalContext& global_context){
   }
   //If all of the devices are busy, assign the first device and
   //make all remaining devices free
-  if(i == 8){
+  if(i == num_of_hddl){
     i = 0;
     global_context.deviceAvailableList[i] = false;
-    for(int j = 1; j < 8; j++){
+    for(int j = 1; j < num_of_hddl; j++){
       global_context.deviceAvailableList[j] = true;
     }
   }

@@ -27,7 +27,7 @@ std::shared_ptr<InferenceEngine::CNNNetwork>
 CreateCNNNetwork(const ONNX_NAMESPACE::ModelProto& model_proto, const GlobalContext& global_context, const SubGraphContext& subgraph_context, std::map<std::string,
                    std::shared_ptr<ngraph::Node>>& const_outputs_map);
 
-int GetFirstAvailableDevice(GlobalContext& global_context);
+int GetFirstAvailableDevice(GlobalContext& global_context, int num_of_hddl);
 
 #if defined(OPENVINO_2020_4) || defined (OPENVINO_2021_1)
 void FillOutputsWithConstantData(Ort::CustomOpApi& ort, std::shared_ptr<ngraph::Node> node, OrtValue* out_tensor);
