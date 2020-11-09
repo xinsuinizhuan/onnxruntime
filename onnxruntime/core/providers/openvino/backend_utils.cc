@@ -9,7 +9,7 @@
 
 #include <inference_engine.hpp>
 
-#include <ngraph/frontend/onnx_import/onnx.hpp>
+// #include <ngraph/frontend/onnx_import/onnx.hpp>
 #include <ngraph/pass/convert_fp32_to_fp16.hpp>
 #include <ngraph/pass/constant_folding.hpp>
 
@@ -55,7 +55,7 @@ CreateCNNNetwork(const ONNX_NAMESPACE::ModelProto& model_proto, const GlobalCont
   ORT_UNUSED_PARAMETER(const_outputs_map);
 #endif
 
-  std::istringstream model_stream{model_proto.SerializeAsString()};
+  std::string model_stream{model_proto.SerializeAsString()};
   std::shared_ptr<ngraph::Function> ng_function;
 
 #ifndef NDEBUG
@@ -65,7 +65,9 @@ CreateCNNNetwork(const ONNX_NAMESPACE::ModelProto& model_proto, const GlobalCont
 #endif
 
   try {
-    ng_function = ngraph::onnx_import::import_onnx_model(model_stream);
+    // ng_function = ngraph::onnx_import::import_onnx_model(model_stream);
+    InferenceEngine::CNNNetwork network = global_context.ie_core.ReadNetwork(model_stream);
+    ng_function = network.getFunction();
     LOGS_DEFAULT(INFO) << "ONNX Import Done";
   } catch (const std::exception& exp) {
     ORT_THROW(log_tag + "[OpenVINO-EP] Exception while importing model to nGraph Func: " + std::string(exp.what()));
@@ -103,7 +105,7 @@ CreateCNNNetwork(const ONNX_NAMESPACE::ModelProto& model_proto, const GlobalCont
 
   try {
     return std::make_shared<InferenceEngine::CNNNetwork>(ng_function);
-  } catch (InferenceEngine::details::InferenceEngineException e) {
+  } catch (InferenceEngine::details::InferenceEngineException &e) {
     ORT_THROW(log_tag + " Exception thrown while making IE::CNNNetwork: " + e.what());
   } catch (...) {
     ORT_THROW(log_tag + " Exception thrown while making IE::CNNNetwork");

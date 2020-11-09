@@ -50,7 +50,7 @@ BasicBackend::BasicBackend(const ONNX_NAMESPACE::ModelProto& model_proto,
 #endif
   if(global_context_.device_type.find("MYRIAD") != std::string::npos){
 
-#if defined(OPENVINO_2021_1) 
+#if defined(OPENVINO_2021_1)
     if(subgraph_context_.set_vpu_config) {
       config["MYRIAD_DETECT_NETWORK_BATCH"] = CONFIG_VALUE(NO);
     }
@@ -59,7 +59,7 @@ BasicBackend::BasicBackend(const ONNX_NAMESPACE::ModelProto& model_proto,
       config["MYRIAD_HW_INJECT_STAGES"] = CONFIG_VALUE(NO);
       config["MYRIAD_COPY_OPTIMIZATION"] = CONFIG_VALUE(NO);
     }
-#else    
+#else
     if(subgraph_context_.set_vpu_config) {
       config["VPU_DETECT_NETWORK_BATCH"] = CONFIG_VALUE(NO);
     }
@@ -73,7 +73,7 @@ BasicBackend::BasicBackend(const ONNX_NAMESPACE::ModelProto& model_proto,
   std::string& hw_target = (global_context_.device_id != "") ? global_context_.device_id : global_context_.device_type;
   try {
     exe_network = global_context_.ie_core.LoadNetwork(*ie_cnn_network_, hw_target, config);
-  } catch (InferenceEngine::details::InferenceEngineException e) {
+  } catch (InferenceEngine::details::InferenceEngineException &e) {
     ORT_THROW(log_tag + " Exception while Loading Network for graph: " + subgraph_context_.subgraph_name + ": " +  e.what());
   } catch (...) {
     ORT_THROW(log_tag + " Exception while Loading Network for graph " + subgraph_context_.subgraph_name);
@@ -107,7 +107,7 @@ void BasicBackend::StartAsyncInference(Ort::CustomOpApi& ort, OrtKernelContext* 
     try {
       graph_input_blob = infer_request->GetBlob(input_name);
 
-    } catch (InferenceEngine::details::InferenceEngineException e) {
+    } catch (InferenceEngine::details::InferenceEngineException &e) {
       ORT_THROW(log_tag + " Cannot access IE Blob for input: " + input_name + e.what());
     } catch (...) {
       ORT_THROW(log_tag + " Cannot access IE Blob for input: " + input_name);
@@ -119,7 +119,7 @@ void BasicBackend::StartAsyncInference(Ort::CustomOpApi& ort, OrtKernelContext* 
   // Start Async inference
   try {
     infer_request->StartAsync();
-  } catch (InferenceEngine::details::InferenceEngineException e) {
+  } catch (InferenceEngine::details::InferenceEngineException &e) {
     ORT_THROW(log_tag + " Couldn't start Inference: " + e.what());
   } catch (...) {
     ORT_THROW(log_tag + " Couldn't start Inference");
@@ -132,7 +132,7 @@ void BasicBackend::CompleteAsyncInference(Ort::CustomOpApi& ort, OrtKernelContex
   // Wait for Async inference completion
   try {
     infer_request->Wait(InferenceEngine::IInferRequest::WaitMode::RESULT_READY);
-  } catch (InferenceEngine::details::InferenceEngineException e) {
+  } catch (InferenceEngine::details::InferenceEngineException &e) {
     ORT_THROW(log_tag + " Exception with completing Inference: " + e.what());
   } catch (...) {
     ORT_THROW(log_tag + " Exception with completing Inference");
@@ -146,7 +146,7 @@ void BasicBackend::CompleteAsyncInference(Ort::CustomOpApi& ort, OrtKernelContex
     auto output_name = output_info_iter->first;
     try {
       graph_output_blob = infer_request->GetBlob(output_name);
-    } catch (InferenceEngine::details::InferenceEngineException e) {
+    } catch (InferenceEngine::details::InferenceEngineException &e) {
       ORT_THROW(log_tag + " Cannot access IE Blob for output: " + output_name + e.what());
     } catch (...) {
       ORT_THROW(log_tag + " Cannot access IE Blob for output: " + output_name);
@@ -202,7 +202,7 @@ void BasicBackend::Infer(Ort::CustomOpApi& ort, OrtKernelContext* context) {
   // Get Output tensors
   LOGS_DEFAULT(INFO) << log_tag << "Inference successful";
   //Once the inference is completed, the infer_request becomes free and is placed back into pool of infer_requests_
-  inferRequestsQueue_->putIdleRequest(infer_request); 
+  inferRequestsQueue_->putIdleRequest(infer_request);
 #ifndef NDEBUG
   if (openvino_ep::backend_utils::IsDebugEnabled()) {
       inferRequestsQueue_->printstatus(); //Printing the elements of infer_requests_ vector pool only in debug mode
