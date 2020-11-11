@@ -14,8 +14,8 @@
 #include "core/common/logging/logging.h"
 
 #include "../backend_utils.h"
-#include <ngraph/frontend/onnx_import/onnx.hpp>
-#include <ngraph/pass/constant_folding.hpp>
+// #include <ngraph/frontend/onnx_import/onnx.hpp>
+// #include <ngraph/pass/constant_folding.hpp>
 
 #include "basic_backend.h"
 
