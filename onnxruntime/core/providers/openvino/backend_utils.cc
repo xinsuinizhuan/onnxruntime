@@ -33,6 +33,10 @@ bool IsDebugEnabled() {
   return (std::getenv("ORT_OPENVINO_ENABLE_DEBUG") != nullptr);
 #endif
 }
+
+bool UseCompiledNetwork() {
+  return (std::getenv("USE_COMPILED_NETWORK") != nullptr);
+}
 void DumpOnnxModelProto(const ONNX_NAMESPACE::ModelProto& model_proto, std::string file_name) {
   std::fstream outfile(file_name, std::ios::out | std::ios::trunc | std::ios::binary);
   model_proto.SerializeToOstream(&outfile);
