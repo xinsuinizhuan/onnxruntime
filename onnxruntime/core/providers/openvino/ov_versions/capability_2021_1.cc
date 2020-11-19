@@ -164,6 +164,9 @@ bool IsOpSupported(std::string name, std::string device) {
   };
   std::set<std::string> supported_ops_vpu = {
     "Expand",
+  #if defined(OPENVINO_2021_2)
+    "GatherND",
+  #endif
     "NonMaxSuppression",
     "NonZero",
     "ReduceLogSum",

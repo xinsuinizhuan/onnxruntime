@@ -35,8 +35,9 @@ BasicBackend::BasicBackend(const ONNX_NAMESPACE::ModelProto& model_proto,
   InferenceEngine::ExecutableNetwork exe_network;
 
 #if defined(OPENVINO_2020_4) || defined(OPENVINO_2021_1)
-  if(const_outputs_map_.size() == subgraph_context_.output_names.size())
+  if(const_outputs_map_.size() == subgraph_context_.output_names.size()) {
     subgraph_context_.is_constant = true;
+  }
 #endif
 
   // Loading model to the plugin
