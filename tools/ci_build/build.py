@@ -237,7 +237,7 @@ def parse_arguments():
         "This is only supported on MacOS")
 
     def verify_device_type(device_read):
-        choices = ["CPU_FP32", "GPU_FP32", "GPU_FP16", "VAD-M_FP16", "MYRIAD_FP16", "VAD-F_FP32"]
+        choices = ["CPU_FP32", "GPU_FP32", "GPU_FP16", "VAD-M_FP16", "MYRIAD_FP16", "VAD-F_FP32", "VPUX_U8"]
         status_Hetero = True
         res = False
         if(device_read in choices):
@@ -771,6 +771,8 @@ def generate_build_tree(cmake_path, source_dir, build_dir, cuda_home, cudnn_home
                            "ON" if args.use_openvino == "VAD-F_FP32" else "OFF"),
                        "-Donnxruntime_USE_OPENVINO_HETERO=" + (
                            "ON" if args.use_openvino.startswith("HETERO") else "OFF"),
+                       "-Donnxruntime_USE_OPENVINO_VPUX=" + (
+                           "ON" if args.use_openvino == "VPUX_U8" else "OFF"),
                        "-Donnxruntime_USE_OPENVINO_DEVICE=" + (args.use_openvino),
                        "-Donnxruntime_USE_OPENVINO_BINARY=" + (
                            "ON" if args.use_openvino else "OFF")]

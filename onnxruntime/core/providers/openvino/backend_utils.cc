@@ -34,9 +34,6 @@ bool IsDebugEnabled() {
 #endif
 }
 
-bool UseCompiledNetwork() {
-  return (std::getenv("USE_COMPILED_NETWORK") != nullptr);
-}
 void DumpOnnxModelProto(const ONNX_NAMESPACE::ModelProto& model_proto, std::string file_name) {
   std::fstream outfile(file_name, std::ios::out | std::ios::trunc | std::ios::binary);
   model_proto.SerializeToOstream(&outfile);
@@ -44,6 +41,10 @@ void DumpOnnxModelProto(const ONNX_NAMESPACE::ModelProto& model_proto, std::stri
 }
 
 #endif
+
+bool UseCompiledNetwork() {
+  return (std::getenv("USE_COMPILED_NETWORK") != nullptr);
+}
 
 struct static_cast_int64
 {
