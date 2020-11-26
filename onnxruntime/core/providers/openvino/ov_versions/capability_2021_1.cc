@@ -58,6 +58,7 @@ bool IsOpSupported(std::string name, std::string device) {
   std::set<std::string> common_supported_ops = {
       "Add",
       "And",
+      "ArgMax",
       "AveragePool",
       "BatchNormalization",
       "Cast",
@@ -94,6 +95,7 @@ bool IsOpSupported(std::string name, std::string device) {
       "Min",
       "Mul",
       "Neg",
+      "NonMaxSuppression",
       "OneHot",
       "Pad",
       "Pow",
@@ -125,7 +127,6 @@ bool IsOpSupported(std::string name, std::string device) {
     "Abs",
     "Acos",
     "Acosh",
-    "ArgMax",
     "ArgMin",
     "Asin",
     "Asinh",
@@ -167,7 +168,6 @@ bool IsOpSupported(std::string name, std::string device) {
   #if defined(OPENVINO_2021_2)
     "GatherND",
   #endif
-    "NonMaxSuppression",
     "NonZero",
     "ReduceLogSum",
     "ReduceSumSquare",
@@ -175,7 +175,6 @@ bool IsOpSupported(std::string name, std::string device) {
     "RoiAlign",
     "Scatter",
     "SinFloat",
-    "ArgMax",
     "Range",
     "Where",
     "ArgMin",
