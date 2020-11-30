@@ -9,7 +9,7 @@
 
 #include <inference_engine.hpp>
 
-#include <ngraph/frontend/onnx_import/onnx.hpp>
+// #include <ngraph/frontend/onnx_import/onnx.hpp>
 #include <ngraph/pass/convert_fp32_to_fp16.hpp>
 #include <ngraph/pass/constant_folding.hpp>
 
@@ -39,6 +39,10 @@ void DumpOnnxModelProto(const Provider_ModelProto& model_proto, std::string file
 
 #endif
 
+bool UseCompiledNetwork() {
+  return (std::getenv("USE_COMPILED_NETWORK") != nullptr);
+}
+
 struct static_cast_int64 {
   template <typename T1>  // T1 models type statically convertible to T
   int64_t operator()(const T1& x) const { return static_cast<int64_t>(x); }
@@ -50,7 +54,7 @@ CreateCNNNetwork(const Provider_ModelProto& model_proto, const GlobalContext& gl
   ORT_UNUSED_PARAMETER(const_outputs_map);
 #endif
 
-  std::istringstream model_stream{model_proto.SerializeAsString()};
+  std::string model_stream{model_proto.SerializeAsString()};
   std::shared_ptr<ngraph::Function> ng_function;
 
 #ifndef NDEBUG
@@ -60,7 +64,10 @@ CreateCNNNetwork(const Provider_ModelProto& model_proto, const GlobalContext& gl
 #endif
 
   try {
-    ng_function = ngraph::onnx_import::import_onnx_model(model_stream);
+    // ng_function = ngraph::onnx_import::import_onnx_model(model_stream);
+    InferenceEngine::Blob::CPtr blob;
+    InferenceEngine::CNNNetwork network = global_context.ie_core.ReadNetwork(model_stream, blob);
+    ng_function = network.getFunction();
     LOGS_DEFAULT(INFO) << "ONNX Import Done";
   } catch (const std::exception& exp) {
     ORT_THROW(log_tag + "[OpenVINO-EP] Exception while importing model to nGraph Func: " + std::string(exp.what()));

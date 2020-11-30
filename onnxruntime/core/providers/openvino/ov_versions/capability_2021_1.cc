@@ -17,7 +17,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 #include <ngraph/ngraph.hpp>
-#include <ngraph/frontend/onnx_import/onnx.hpp>
+// #include <ngraph/frontend/onnx_import/onnx.hpp>
 #if defined(_MSC_VER)
 #pragma warning(default : 4244 4245)
 #elif __GNUC__
@@ -619,8 +619,7 @@ static bool IsTypeSupported(const Provider_NodeArg* node_arg, bool is_initialize
   }
 }
 
-static bool IsNodeSupported(const std::map<std::string, std::set<std::string>>& op_map,
-                            const Provider_GraphViewer& graph_viewer,
+static bool IsNodeSupported(const Provider_GraphViewer& graph_viewer,
                             const NodeIndex node_idx, std::string& device_id) {
   const auto& node = graph_viewer.GetNode(node_idx);
   const auto& optype = node->OpType();
@@ -719,22 +718,23 @@ static bool IsNodeSupported(const std::map<std::string, std::set<std::string>>& 
   }
 
   //Check 3b
-  const auto opset = op_map.find(domain);
-  if (opset == op_map.end() || opset->second.find(optype) == opset->second.end()) {
-    return false;
-  } else {
-    return true;
-  }
+  // const auto opset = op_map.find(domain);
+  // if (opset == op_map.end() || opset->second.find(optype) == opset->second.end()) {
+  //   return false;
+  // } else {
+  //   return true;
+  // }
+  return true;
 }
 
 static std::vector<NodeIndex>
 GetUnsupportedNodeIndices(const Provider_GraphViewer& graph_viewer, std::string device, /*out*/ std::unordered_set<std::string>& ng_required_initializers) {
-  const auto ng_supported_ops = GetNgSupportedOps(GetOnnxOpSet(graph_viewer));
+  // const auto ng_supported_ops = GetNgSupportedOps(GetOnnxOpSet(graph_viewer));
 
   std::vector<NodeIndex> unsupported_nodes_idx;
 
   for (const auto& node_idx : graph_viewer.GetNodesInTopologicalOrder()) {
-    if (IsNodeSupported(ng_supported_ops, graph_viewer, node_idx, device)) {
+    if (IsNodeSupported(graph_viewer, node_idx, device)) {
       // Collect inputs that are initializers
       graph_viewer.GetNode(node_idx)->ForEachDef([&ng_required_initializers, &graph_viewer](const Provider_NodeArg& node_arg, bool is_input) {
               if(is_input && graph_viewer.GetAllInitializedTensors().count(node_arg.Name())) {

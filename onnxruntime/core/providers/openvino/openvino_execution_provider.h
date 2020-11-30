@@ -73,6 +73,9 @@ struct OpenVINOExecutionProviderInfo {
 #elif defined OPENVINO_CONFIG_MYRIAD
       device_type_ = "MYRIAD";
       precision_ = "FP16";
+#elif defined OPENVINO_CONFIG_VPUX
+      device_type_ = "VPUX";
+      precision_ = "U8";
 #elif defined OPENVINO_CONFIG_VAD_M
       device_type_ = "HDDL";
       precision_ = "FP16";
@@ -105,6 +108,9 @@ struct OpenVINOExecutionProviderInfo {
     } else if (dev_type == "MYRIAD_FP16") {
       device_type_ = "MYRIAD";
       precision_ = "FP16";
+    } else if (dev_type == "VPUX_U8") {
+      device_type_ = "VPUX";
+      precision_ = "U8";
     } else if (dev_type == "VAD-M_FP16") {
       device_type_ = "HDDL";
       precision_ = "FP16";
