@@ -178,7 +178,7 @@ bool IsOpSupported(std::string name, std::string device) {
     std::merge(common_supported_ops.begin(), common_supported_ops.end(),
                supported_ops_gpu.begin(), supported_ops_gpu.end(),
                std::inserter(supported_ops, supported_ops.begin()));
-  } else if (device == "MYRIAD" || device == "HDDL") {
+  } else if (device == "MYRIAD" || device == "HDDL" || device == "VPUX") {
     std::merge(common_supported_ops.begin(), common_supported_ops.end(),
                supported_ops_vpu.begin(), supported_ops_vpu.end(),
                std::inserter(supported_ops, supported_ops.begin()));
