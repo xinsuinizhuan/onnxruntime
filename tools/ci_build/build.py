@@ -578,8 +578,8 @@ def install_python_deps(numpy_version=""):
     dep_packages.append('sympy>=1.1')
     dep_packages.append('packaging')
     dep_packages.append('cerberus')
-    run_subprocess([sys.executable, '-m', 'pip', 'install', '--trusted-host',
-                    'files.pythonhosted.org'] + dep_packages)
+    #run_subprocess([sys.executable, '-m', 'pip', 'install', '--trusted-host',
+    #                'files.pythonhosted.org'] + dep_packages)
 
 
 # We need to install Torch to test certain functionalities of the ORT Python package
