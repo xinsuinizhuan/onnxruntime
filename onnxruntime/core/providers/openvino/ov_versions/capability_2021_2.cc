@@ -392,9 +392,11 @@ static bool IsUnsupportedOpMode(const Provider_Node* node, const Provider_GraphV
     auto graph_inputs = graph_viewer.GetInputs();
     bool cond_for_slice = false;
     
-    const auto& output = node->OutputDefs()[0];
-    if (output->TypeAsProto()->tensor_type().elem_type() != ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_FLOAT16)
-      return true;
+    if (device_id.find("MYRIAD") != std::string::npos) {
+      const auto& output = node->OutputDefs()[0];
+      if (output->TypeAsProto()->tensor_type().elem_type() == ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64)
+        return true;
+    }
 
     auto it = find(graph_inputs.begin(), graph_inputs.end(), data_arg);
     if (it != graph_inputs.end()) {
