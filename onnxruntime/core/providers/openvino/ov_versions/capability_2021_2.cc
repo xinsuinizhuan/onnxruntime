@@ -278,22 +278,22 @@ static bool IsUnsupportedOpMode(const Provider_Node* node, const Provider_GraphV
         return true;
     }
   } else if (optype == "Max" || optype == "Min" || optype == "Mean" || optype == "Sum") {
-    if (device_id.find("MYRIAD") == std::string::npos) {
-    if (GetInputCount(node, initializers) == 1)
-      return true;
-    if (optype == "Max" || optype == "Min") {
-      for (size_t i = 0; i < node->InputDefs().size(); i++) {
-        auto dtype = node->InputDefs()[i]->TypeAsProto()->tensor_type().elem_type();
-        if (dtype == ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_UINT8 ||
-          dtype == ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT16)
-          return true;
-      }
-    }
-    }
-    else {
-    if (GetInputCount(node, initializers) == 1)
-      return true;
-    }
+    // if (device_id.find("MYRIAD") == std::string::npos) {
+    // if (GetInputCount(node, initializers) == 1)
+    //   return true;
+    // if (optype == "Max" || optype == "Min") {
+    //   for (size_t i = 0; i < node->InputDefs().size(); i++) {
+    //     auto dtype = node->InputDefs()[i]->TypeAsProto()->tensor_type().elem_type();
+    //     if (dtype == ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_UINT8 ||
+    //       dtype == ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT16)
+    //       return true;
+    //   }
+    // }
+    // }
+    // else {
+    // if (GetInputCount(node, initializers) == 1)
+    //   return true;
+    // }
   } else if (optype == "Clip") {
     //Only float 16, float and double data types are supported
     const bool data_is_float = node->InputDefs()[0]->Type()->find("float") != std::string::npos;
@@ -355,11 +355,11 @@ static bool IsUnsupportedOpMode(const Provider_Node* node, const Provider_GraphV
     if (input_it != graph_inputs.end() && output_it != graph_outputs.end())
       return true;
   } else if (optype == "NonMaxSuppression") {
-    auto graph_outputs = graph_viewer.GetOutputs();
-    const auto& output = node->OutputDefs()[0];
-    auto output_it = find(graph_outputs.begin(), graph_outputs.end(), output);
-    if (output_it != graph_outputs.end())
-      return true;
+    // auto graph_outputs = graph_viewer.GetOutputs();
+    // const auto& output = node->OutputDefs()[0];
+    // auto output_it = find(graph_outputs.begin(), graph_outputs.end(), output);
+    // if (output_it != graph_outputs.end())
+    //   return true;
   } else if (optype == "Scatter" || optype == "ScatterElements") {
     const auto& attributes = node->GetAttributes();
     auto axis_attr = attributes.find("axis");
@@ -387,31 +387,31 @@ static bool IsUnsupportedOpMode(const Provider_Node* node, const Provider_GraphV
       return true;
   } else if (optype == "Slice") {
     //start, end, axes need to be a initializer
-    const auto& data_arg = node->InputDefs()[0];
-    auto graph_inputs = graph_viewer.GetInputs();
-    bool cond_for_slice = false;
-    
-    if(device_id.find("MYRIAD") != std::string::npos) {
-      const auto& output = node->OutputDefs()[0];
-      if (output->TypeAsProto()->tensor_type().elem_type() == ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64)
-        return true;
-    }
+    // const auto& data_arg = node->InputDefs()[0];
+    // auto graph_inputs = graph_viewer.GetInputs();
+    // bool cond_for_slice = false;
 
-    auto it = find(graph_inputs.begin(), graph_inputs.end(), data_arg);
-    if (it != graph_inputs.end()) {
-      if (node->InputDefs().size() > 1) {
-        const auto& start_arg = node->InputDefs()[1];
-        const auto& end_arg = node->InputDefs()[2];
-        cond_for_slice |= initializers.find(start_arg->Name()) == initializers.end();
-        cond_for_slice |= initializers.find(end_arg->Name()) == initializers.end();
-      }
-      if (node->InputDefs().size() > 3) {
-        const auto& axes_arg = node->InputDefs()[3];
-        cond_for_slice |= initializers.find(axes_arg->Name()) == initializers.end();
-      }
-    }
+    // if(device_id.find("MYRIAD") != std::string::npos) {
+    //   const auto& output = node->OutputDefs()[0];
+    //   if (output->TypeAsProto()->tensor_type().elem_type() == ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64)
+    //     return true;
+    // }
 
-    return cond_for_slice;
+    // auto it = find(graph_inputs.begin(), graph_inputs.end(), data_arg);
+    // if (it != graph_inputs.end()) {
+    //   if (node->InputDefs().size() > 1) {
+    //     const auto& start_arg = node->InputDefs()[1];
+    //     const auto& end_arg = node->InputDefs()[2];
+    //     cond_for_slice |= initializers.find(start_arg->Name()) == initializers.end();
+    //     cond_for_slice |= initializers.find(end_arg->Name()) == initializers.end();
+    //   }
+    //   if (node->InputDefs().size() > 3) {
+    //     const auto& axes_arg = node->InputDefs()[3];
+    //     cond_for_slice |= initializers.find(axes_arg->Name()) == initializers.end();
+    //   }
+    // }
+
+    // return cond_for_slice;
   } else if (optype == "AveragePool") {
     // ceil_mode attribute is not supported in nGraph
     const auto& attributes = node->GetAttributes();
