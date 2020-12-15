@@ -688,6 +688,11 @@ static bool IsNodeSupported(const std::map<std::string, std::set<std::string>>& 
             has_unsupported_dimension = true;
             return;
           }
+          if ((device_id.find("MYRIAD") != std::string::npos) &&
+              (dim.value_case() != dim.kDimValue) &&
+              ((optype == "Conv") || (optype == "ConvTranspose"))) {
+              has_unsupported_dimension = true;
+          }
         }
       }
     }
