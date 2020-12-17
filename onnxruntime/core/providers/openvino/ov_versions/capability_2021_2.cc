@@ -289,8 +289,21 @@ static bool IsUnsupportedOpMode(const Provider_Node* node, const Provider_GraphV
     const bool data_is_double = node->InputDefs()[0]->Type()->find("double") != std::string::npos;
     return !(data_is_float || data_is_float16 || data_is_double);
   } else if (optype == "Conv" || optype == "ConvTranspose") {
+    
     if (GetInputCount(node, initializers) > 1)
       return true;
+    
+    if ((optype =="ConvTranspose") && (device_id.find("MYRIAD") != std::string::npos)) {
+      const auto& input_arg = node->InputDefs()[0];
+      auto shape = input_arg->Shape();
+      if (shape != nullptr) { 
+        if (shape->dim(0).value_case() != shape->dim(0).kDimValue) {
+          std::cout << "this is dynamic input on myriad" << "\n";
+          return true;
+        }
+      }
+    }
+
     auto& attributes = node->GetAttributes();
     if (attributes.count("auto_pad") == 0 || attributes.at("auto_pad").s() == "") {
       return true;
