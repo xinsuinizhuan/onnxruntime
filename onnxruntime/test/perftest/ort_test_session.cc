@@ -66,7 +66,12 @@ OnnxRuntimeTestSession::OnnxRuntimeTestSession(Ort::Env& env, std::random_device
 #endif
   } else if (provider_name == onnxruntime::kOpenVINOExecutionProvider) {
 #ifdef USE_OPENVINO
-    Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_OpenVINO(session_options, ""));
+    OrtOpenVINOProviderOptions options;
+    options.device_type = performance_test_config.run_config.ov_device_type.c_str(); //To set the device_type
+    options.device_id = performance_test_config.run_config.ov_device_id.c_str(); // To set the device_id
+    options.enable_vpu_fast_compile = performance_test_config.run_config.ov_enable_vpu_fast_compile; // To enable_vpu_fast_compile, default is false
+    options.num_of_threads = performance_test_config.run_config.ov_num_of_threads; // To set number of free InferRequests, default is 8
+    session_options.AppendExecutionProvider_OpenVINO(options);
 #else
     ORT_THROW("OpenVINO is not supported in this build\n");
 #endif

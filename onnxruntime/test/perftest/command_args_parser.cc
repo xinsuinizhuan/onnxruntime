@@ -51,12 +51,17 @@ namespace perftest {
       "\t-d [cudnn_conv_algorithm]: Specify CUDNN convolution algothrithms: 0(benchmark), 1(heuristic), 2(default). \n"
       "\t-q: [CUDA only] use separate stream for copy. \n"
       "\t-z: Set denormal as zero. When turning on this option reduces latency dramatically, a model may have denormals.\n"
+      "\t-d: [OpenVINO only] [device_type]: Overrides the accelerator hardware type and precision with these values at runtime.\n"
+      "\t-D: [OpenVINO only] [device_id]: Selects a particular hardware device for inference.\n"
+      "\t-f: [OpenVINO only] [enable_vpu_fast_compile]: Fast-compile may be optionally enabled to speeds up the model's compilation to VPU device specific format.\n"
+      "\t-T: [OpenVINO only] [num_of_threads]: Overrides the accelerator default value of number of threads with this value at runtime.\n"
+      "\t\tIt just sets the number of free InferRequests that should be made available. The value must be > 0.\n"
       "\t-h: help\n");
 }
 
 /*static*/ bool CommandLineParser::ParseArguments(PerformanceTestConfig& test_config, int argc, ORTCHAR_T* argv[]) {
   int ch;
-  while ((ch = getopt(argc, argv, ORT_TSTR("b:m:e:r:t:p:x:y:c:d:o:u:AMPIvhsqz"))) != -1) {
+  while ((ch = getopt(argc, argv, ORT_TSTR("b:m:e:r:t:p:x:y:c:d:o:u:D:i:f:T:AMPIvhsqz"))) != -1) {
     switch (ch) {
       case 'm':
         if (!CompareCString(optarg, ORT_TSTR("duration"))) {
@@ -186,6 +191,21 @@ namespace perftest {
         break;
       case 'z':
         test_config.run_config.set_denormal_as_zero = true;
+        break;
+      case 'D':
+        test_config.run_config.ov_device_type = optarg;
+        break;
+      case 'i':
+        test_config.run_config.ov_device_id = optarg;
+        break;
+      case 'f':
+        test_config.run_config.ov_enable_vpu_fast_compile = true;
+        break;
+      case 'T':
+        if (test_config.run_config.ov_num_of_threads <= 0) {
+          return false;
+        }
+        test_config.run_config.ov_num_of_threads = static_cast<size_t>(OrtStrtol<PATH_CHAR_TYPE>(optarg, nullptr));
         break;
       case '?':
       case 'h':
