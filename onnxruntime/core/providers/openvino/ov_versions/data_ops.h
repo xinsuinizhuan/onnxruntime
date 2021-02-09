@@ -15,9 +15,9 @@ enum versionNum{
 using VersionNum = enum versionNum;
 
 struct supportedOp {
+  std::string optype;
   VersionNum version;
   std::vector<std::string> device_type;  
-  std::string optype;
 };
 
 struct unsupportedOpMode{

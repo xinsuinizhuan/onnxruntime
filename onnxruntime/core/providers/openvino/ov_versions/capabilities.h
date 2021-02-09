@@ -14,8 +14,7 @@ class GetCapability {
         std::string device_type_;
         DataOps* data_ops_;
     public:
-        GetCapability (const GraphViewer& graph_viewer_param, std::string device_type_param);   
-        virtual void SetVersionId(const std::string version_param);     
+        GetCapability (const GraphViewer& graph_viewer_param, std::string device_type_param, const std::string version_param);   
         virtual std::vector<std::unique_ptr<ComputeCapability>> Execute();
 };
 

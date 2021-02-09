@@ -25,13 +25,9 @@ namespace onnxruntime {
 namespace openvino_ep {
 
 //Constructor 
-GetCapability::GetCapability(const GraphViewer& graph_viewer_param, std::string device_type_param):
+GetCapability::GetCapability(const GraphViewer& graph_viewer_param, std::string device_type_param,
+                             const std::string version_param):
                 graph_viewer_(graph_viewer_param), device_type_(device_type_param){
- 
-}
-
-//Set current version id of Openvino
-void GetCapability::SetVersionId(const std::string version_param) {
   if (version_param == "V_2021_2") {
     data_ops_ = new DataOps(graph_viewer_, V_2021_2, device_type_);
   } else if (version_param == "V_2021_1") {
