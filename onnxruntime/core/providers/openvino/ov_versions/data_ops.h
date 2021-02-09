@@ -35,7 +35,7 @@ private:
 const GraphViewer& graph_viewer_;
 VersionNum version_id_;
 std::string device_id_;
-std::multimap<std::string, UnsupportedOpMode &> op_list_;
+std::multimap<std::string, UnsupportedOpMode> op_list_;
 std::vector<SupportedOp> subgraph_supported_;
 std::vector<SupportedOp> no_dimension_supported_;
 std::set<Pairs> supported_types_vpu_; 
