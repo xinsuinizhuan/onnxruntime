@@ -687,7 +687,7 @@ void DataOps::populate_op_mode_supported() {
     op_list_.insert({"TopK", obj});
   }
   {
-    UnsupportedOpMode obj = {{V_2020_4,V_2021_2}, 
+    UnsupportedOpMode obj = {{V_2020_4,V_2021_1,V_2021_2}, 
       [this](const Node* node, const Provider_InitializedTensorSet&) {
         return this->dimension_unsupported(node);
       }
@@ -695,7 +695,7 @@ void DataOps::populate_op_mode_supported() {
     op_list_.insert({"Unsqueeze", obj});
   }
   {
-    UnsupportedOpMode obj = {{V_2021_1}, 
+    UnsupportedOpMode obj = {{V_2021_1,V_2021_2}, 
       [this](const Node* node, const Provider_InitializedTensorSet& ) {
       //check for attributes
       auto& upsample_attr = node->GetAttributes();
