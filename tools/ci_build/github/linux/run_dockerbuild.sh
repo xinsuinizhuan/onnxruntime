@@ -128,7 +128,7 @@ fi
 DOCKER_RUN_PARAMETER="--name onnxruntime-$BUILD_DEVICE \
                       --volume $SOURCE_ROOT:/onnxruntime_src \
                       --volume $BUILD_DIR:/build \
-                      --volume /data/models:/build/models:ro \
+                      --volume /home/xeon/docker_workspace/models:/build/models:ro \
                       --volume /data/onnx:/data/onnx:ro \
                       --volume $HOME/.cache/onnxruntime:/home/onnxruntimedev/.cache/onnxruntime \
                       --volume $HOME/.onnx:/home/onnxruntimedev/.onnx"
