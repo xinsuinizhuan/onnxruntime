@@ -297,7 +297,7 @@ static bool IsUnsupportedOpMode(const Node* node, const GraphViewer& graph_viewe
     if (GetInputCount(node, initializers) > 1)
       return true;
     //we do not support cov operations with dynamic batching in myriad
-    if ((optype =="ConvTranspose") && (device_id.find("MYRIAD") != std::string::npos)) {
+    /*if ((optype =="ConvTranspose") && (device_id.find("MYRIAD") != std::string::npos)) {
       const auto& input_arg = node->InputDefs()[0];
       auto shape = input_arg->Shape();
       if (shape != nullptr) { 
@@ -305,7 +305,7 @@ static bool IsUnsupportedOpMode(const Node* node, const GraphViewer& graph_viewe
           return true;
         }
       }
-    }
+    }*/
 
     auto& attributes = node->GetAttributes();
     if (attributes.count("auto_pad") == 0 || attributes.at("auto_pad").s() == "") {
