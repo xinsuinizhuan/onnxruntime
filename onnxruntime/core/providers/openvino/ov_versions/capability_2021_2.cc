@@ -158,9 +158,12 @@ bool IsOpSupported(std::string name, std::string device) {
   };
   std::set<std::string> supported_ops_vpu = {
       "ArgMin",
+      "Ceil",
       "Equal",
       "Expand",
+      "GatherElements",
       "GatherND",
+      "Loop",
       "NonZero",
       "Range",
       "ReduceLogSum",
@@ -171,6 +174,7 @@ bool IsOpSupported(std::string name, std::string device) {
       "Scatter",
       "ScatterElements",
       "SinFloat",
+      "Tile",
       "Where",
   };
 
@@ -249,7 +253,7 @@ static bool IsUnsupportedOpMode(const Node* node, const GraphViewer& graph_viewe
 
   if (optype == "MaxPool") {
     //MaxPool "indices" output is not currently supported.
-    if (node->OutputDefs().size() > 1) {
+   /* if (node->OutputDefs().size() > 1) {
       return true;
     }
 
@@ -271,7 +275,7 @@ static bool IsUnsupportedOpMode(const Node* node, const GraphViewer& graph_viewe
       return true;
     }
     if (!IsDimensionSupported(node))
-      return true;
+      return true;*/
   } else if (optype == "Abs") {
     for (size_t i = 0; i < node->InputDefs().size(); i++) {
       if (node->InputDefs()[i]->TypeAsProto()->tensor_type().elem_type() != ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_FLOAT)
@@ -329,8 +333,8 @@ static bool IsUnsupportedOpMode(const Node* node, const GraphViewer& graph_viewe
       return true;
   } else if (optype == "Where") {
     //float data type is not supported
-    const bool data_is_float = node->InputDefs()[1]->Type()->find("float") != std::string::npos;
-    return data_is_float;
+    //const bool data_is_float = node->InputDefs()[1]->Type()->find("float") != std::string::npos;
+    //return data_is_float;
   } else if (optype == "PRelu") {
     auto slope = node->InputDefs()[1];
 
@@ -685,8 +689,8 @@ static bool IsNodeSupported(const std::map<std::string, std::set<std::string>>& 
 
         if (device_id.find("MYRIAD") != std::string::npos) {
             if (optype == "ArgMin" || optype == "Max" ||
-                optype == "Add" || optype == "Less" || optype == "Greater" ||
-                optype == "Clip" || optype == "Resize" || optype == "Equal" )
+                optype == "Add" || optype == "Less" || optype == "Greater" || optype == "Reshape" ||
+                optype == "Clip" || optype == "Resize" || optype == "Equal" || optype == "Ceil" || optype == "Loop" || optype == "ReduceMin"  )
               return;
         }
         has_unsupported_dimension = true;
@@ -806,9 +810,9 @@ GetCapability_2021_2(const GraphViewer& graph_viewer, std::string device_id) {
         return result;
       //If reshape is not an intermediate node, shape needs to be an initializer
       if (node->OpType() == "Reshape") {
-        const auto& shape_arg = node->InputDefs()[1];
-        if (ng_required_initializers.find(shape_arg->Name()) == ng_required_initializers.end())
-          return result;
+      //  const auto& shape_arg = node->InputDefs()[1];
+      //  if (ng_required_initializers.find(shape_arg->Name()) == ng_required_initializers.end())
+      //    return result;
       } else if (node->OpType() == "RoiAlign") {
         using onnx_dtype = ONNX_NAMESPACE::TensorProto_DataType;
 
